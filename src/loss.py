@@ -10,7 +10,7 @@ from GaussianLinearMap import GaussianLinearMap
 def energy_function(hoping=1.0,DeltaX=0.0,DeltaY=0.0,Lx=100,Ly=100):
     batch_k = BatchK(Lx,Ly)
     batch_cosk = jnp.sum(jnp.cos(batch_k),axis=1)
-    batch_delta = vmap(lambda x : jnp.vdot(x,jnp.array([1.0,-1.0])))(jnp.cos(batch_k))
+    batch_delta = vmap(lambda x : jnp.vdot(x,jnp.array([DeltaX,DeltaY])))(jnp.cos(batch_k))
 
     def energy(BatchGout):
         r""" 
