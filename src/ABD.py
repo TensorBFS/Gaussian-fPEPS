@@ -8,16 +8,6 @@ def getGammaProjector(T,Nv):
     r"""Get Gamma local from orthogonal matrix T"""
     return GammaProjector(T,J(Nv),Nv)
 
-def getABDfromR(R,Nv):
-    r""" R.shape = (8*Nv+4,8*Nv+4)"""
-    T = unitarize(R)
-    return getABDfromT(T,Nv)
-
-def getABDfromT(T,Nv):
-    r""" T.shape = (8*Nv+4,8*Nv+4) and T should be orthogonal"""
-    Gamma = GammaProjector(T,J(Nv),Nv)
-    return getABD(Gamma,Nv)
-
 def J(Nv):
     r""" direct sum of [0 1;-1 0]; 8Nv+4 comes from 4 directions-> 2 in each direction.
      4 from up and down physical fermions """
@@ -27,7 +17,7 @@ def GammaProjector(T,J,Nv):
     r""" Despite a transpose, obtain Gamma Projector """
     return jnp.transpose(T) @ J @T
 
-def getABD(GammaP,Nv):
+def getABD(GammaP):
     r"""get A,B,D from slice GammaProjector"""
     A = GammaP[0:4,0:4]
     B = GammaP[0:4,4:]
