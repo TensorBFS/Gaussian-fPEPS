@@ -6,7 +6,6 @@ import jax.numpy as jnp
 from jax.scipy.linalg import inv
 from ABD import getABD
 
-@jax.jit
 def GaussianLinearMap(Glocal,Gin):
     r""" Glocal: Local project, Gin, Gamma in"""
     A,B,D = getABD(Glocal)

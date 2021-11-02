@@ -1,7 +1,8 @@
 # define loss function
 # Contains measuring
 
-from jax import vmap
+from functools import partial
+from jax import vmap,jit
 import jax.numpy as jnp
 from ABD import unitarize,getGammaProjector
 from Gin import BatchGammaIn,BatchK
@@ -25,10 +26,11 @@ def energy_function(hoping=1.0,DeltaX=0.0,DeltaY=0.0,Lx=100,Ly=100):
 def optimize_runtime_loss(Lx=100,Ly=100,Nv=2,hoping=1.0,DeltaX=0.0,DeltaY=0.0):
     BatchGin = BatchGammaIn(Lx,Ly,Nv)
     energy = energy_function(hoping=hoping,DeltaX=DeltaX,DeltaY=DeltaY,Lx=Lx,Ly=Ly)
+    
     def lossR(R):
         r""" Maybe transform it to lossT will be helpful"""
         T = unitarize(R)
         Glocal = getGammaProjector(T,Nv)
         BatchGout = GaussianLinearMap(Glocal,BatchGin)
-        return energy(BatchGout)
+        return jnp.real(energy(BatchGout))
     return lossR

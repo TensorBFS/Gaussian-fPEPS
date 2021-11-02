@@ -1,5 +1,7 @@
 # Contains Functions to construct ABD
 
+from functools import partial
+from jax import jit
 import jax.numpy as jnp
 from jax.scipy.linalg import block_diag
 from jax.scipy.linalg import expm
@@ -15,7 +17,7 @@ def J(Nv):
 
 def GammaProjector(T,J,Nv):
     r""" Despite a transpose, obtain Gamma Projector """
-    return jnp.transpose(T) @ J @T
+    return jnp.transpose(T) @ J @ T
 
 def getABD(GammaP):
     r"""get A,B,D from slice GammaProjector"""

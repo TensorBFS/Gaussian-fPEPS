@@ -1,7 +1,8 @@
 # This file contains contruction of Gamma in
 # non differentiable
 
-from jax import vmap
+from functools import partial
+from jax import vmap,jit
 import jax.numpy as jnp
 from jax.scipy.linalg import block_diag
 
@@ -23,7 +24,9 @@ def GammaIn(k,Nv):
     return block_diag(*[NvGammaIn(ki,Nv) for ki in k])
 
 def BatchK(Lx,Ly):
-    return jnp.array([[2*jnp.pi*(i-0.5)/Lx,2*jnp.pi*(j)/Ly] for i in range(Lx) for j in range(Ly)])
+    X,Y = jnp.meshgrid((jnp.arange(Lx)-0.5)/Lx,(jnp.arange(Ly))/Ly)
+    G = 2 * jnp.pi* jnp.array([X.flatten(),Y.flatten()]).T 
+    return G
 
 def BatchGammaIn(Lx,Ly,Nv):
     r"""Generate BZ for APBC-PBC boundary condition, return a batch of Lx,Ly
