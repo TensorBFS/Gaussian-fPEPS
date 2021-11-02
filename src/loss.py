@@ -2,7 +2,7 @@
 # Contains measuring
 
 from functools import partial
-from jax import vmap,jit
+from jax import vmap
 import jax.numpy as jnp
 from ABD import unitarize,getGammaProjector
 from Gin import BatchGammaIn,BatchK

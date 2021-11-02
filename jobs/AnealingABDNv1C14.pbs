@@ -1,0 +1,11 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -V
+#PBS -l nodes=1:ppn=20:gpus=1
+#PBS -N BatchABDNv1C14
+#PBS -o /home/qiyang/source/jaxgfpeps/log/BatchABDNv1C14.log
+#PBS -e /home/qiyang/source/jaxgfpeps/log/BatchABDNv1C14.log
+
+python3 /home/qiyang/source/jaxgfpeps//src/main.py --Lx 20 --Ly 20 --Nv 1 --DeltaX 5.011872336272722 --DeltaY -5.011872336272722 --label 14  --loadlabel 14 
+
