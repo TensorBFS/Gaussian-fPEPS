@@ -32,11 +32,11 @@ if __name__ == '__main__':
         value, grad = value_and_grad(lossR)(jnp.reshape(jnp.array(R),(Rsize,Rsize)))
         return np.array(value), np.array(grad).ravel()
 #
-    results = scipy.optimize.minimize(val_grad_R, np.array(R).ravel(),
-                                    method="L-BFGS-B", jac=True, options={'gtol': 1e-07,'maxiter': 1000,'disp':True})
+    # results = scipy.optimize.minimize(val_grad_R, np.array(R).ravel(),
+    #                                 method="L-BFGS-B", jac=True, options={'gtol': 1e-07,'maxiter': 1000,'disp':True})
     #
-    # def hessian_f(R):
-    #     return np.reshape(np.array(jax.hessian(lossR)(jnp.reshape(R,(Rsize,Rsize)))),(Rsize*Rsize,Rsize*Rsize))
+    def hessian_f(R):
+        return np.reshape(np.array(jax.hessian(lossR)(jnp.reshape(R,(Rsize,Rsize)))),(Rsize*Rsize,Rsize*Rsize))
 #
     results = scipy.optimize.minimize(val_grad_R, np.array(R).ravel(),
                                     method=args.optimizer, jac=True, hess=hessian_f ,options={'gtol': args.gtol,'maxiter': args.MaxIter,'disp': args.OptimDisp==1 })
@@ -44,5 +44,3 @@ if __name__ == '__main__':
     print("success:", results.success, "\nniterations:", results.nit, "\nfinal loss:", results.fun)
     #
     savelog(Key,results)
-
-    

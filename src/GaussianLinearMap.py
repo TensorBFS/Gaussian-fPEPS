@@ -9,7 +9,4 @@ from ABD import getABD
 def GaussianLinearMap(Glocal,Gin):
     r""" Glocal: Local project, Gin, Gamma in"""
     A,B,D = getABD(Glocal)
-    def ABDGamma(Gin):
-        return A + B @ inv(D+Gin) @ jnp.transpose(B)
-    vmapABD = jax.vmap(ABDGamma,0)
-    return vmapABD(Gin)
+    return A + B @ inv(D+Gin) @ jnp.transpose(B) # for newer jax version.

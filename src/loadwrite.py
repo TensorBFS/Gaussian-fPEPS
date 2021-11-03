@@ -8,9 +8,12 @@ def initialR(loadfile,Rsize):
         print('Try to initialize R from',loadfile)
         with h5py.File(loadfile, 'r') as f:
             if "/transformer/R" in f.keys():
-                return h5py.File(loadfile, 'r')["/transformer/R"]
+                R = f["/transformer/R"][:]
+                f.close()
+                return jnp.reshape(R,(Rsize,Rsize))
             else:
                 print("Load Failed! No /transformer/R in",loadfile," switch to random initialize!")
+                f.close()
                 return jnp.array(np.random.rand(Rsize,Rsize))
     return jnp.array(np.random.rand(Rsize,Rsize))
 
@@ -24,6 +27,7 @@ def savelog(writefile,results):
             f["/optimize/success"] = results.success
             f["/optimize/iterations"] = results.nit
             f["/optimize/normg"] = np.linalg.norm(results.jac)
+            f.close()
 
 
         

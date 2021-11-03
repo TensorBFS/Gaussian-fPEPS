@@ -2,3 +2,6 @@
 .history/*
 *.log
 *.pbs
+*.tar
+*.prof
+*.h5
