@@ -27,10 +27,9 @@ def optimize_runtime_loss(Lx=100,Ly=100,Nv=2,hoping=1.0,DeltaX=0.0,DeltaY=0.0):
     BatchGin = BatchGammaIn(Lx,Ly,Nv)
     energy = energy_function(hoping=hoping,DeltaX=DeltaX,DeltaY=DeltaY,Lx=Lx,Ly=Ly)
     
-    def lossR(R):
+    def lossT(T):
         r""" Maybe transform it to lossT will be helpful"""
-        T = unitarize(R)
         Glocal = getGammaProjector(T,Nv)
         BatchGout = GaussianLinearMap(Glocal,BatchGin)
         return jnp.real(energy(BatchGout))
-    return lossR
+    return lossT

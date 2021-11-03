@@ -13,7 +13,7 @@ parser.add_argument("--DeltaY", type=float, default = 0.0, help = "paring term i
 
 # Optimizer 
 parser.add_argument("--optimizer", default='trust-ncg', choices=['trust-ncg','None'], help="optimizer")
-parser.add_argument("--MaxIter", type=int, default = 30, help= "MaxIteration for ABD optimizer")
+parser.add_argument("--MaxIter", type=int, default = 1000, help= "MaxIteration for ABD optimizer")
 parser.add_argument("--gtol", type=float, default=1E-7, help="g tol for optimizer")
 parser.add_argument("--OptimDisp", type=int, default=1, help="displya optimization information")
 
