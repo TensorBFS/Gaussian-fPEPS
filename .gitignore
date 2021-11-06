@@ -2,6 +2,7 @@
 .history/*
 *.log
 *.pbs
+jobs/*
 *.tar
 *.prof
 *.h5

@@ -21,6 +21,10 @@ if __name__ == '__main__':
     Key = "/home/qiyang/source/jaxgfpeps/result/Nv{}C{}.h5".format(args.Nv,args.label)
 #
     T = initialT(LoadKey,Tsize)
+    #
+    # Project T to Stiefel Manifold
+    U,S,V = np.linalg.svd(T)
+    T = U @ V
 #
     lossT = jit(optimize_runtime_loss(Nv=args.Nv,Lx=args.Lx,Ly=args.Ly,
     hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY),backend='gpu')

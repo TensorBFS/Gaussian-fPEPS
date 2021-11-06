@@ -2,14 +2,14 @@ import argparse
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument("--folder", default='./data/',help="where to store results")
-parser.add_argument("--Nv", type=int, default=2, help="Nv")
-parser.add_argument("--Lx", type=int, default=20, help="system size length")
-parser.add_argument("--Ly", type=int, default=20, help="system size length")
+parser.add_argument("--Nv", type=int, default=1, help="Nv")
+parser.add_argument("--Lx", type=int, default=101, help="system size length")
+parser.add_argument("--Ly", type=int, default=101, help="system size length")
 
 # Hamiltonian
 parser.add_argument("--ht", type=float, default = 1.0, help = "Hoping term")
-parser.add_argument("--DeltaX", type=float, default = 0.0, help = "paring term in X direction")
-parser.add_argument("--DeltaY", type=float, default = 0.0, help = "paring term in Y direction")
+parser.add_argument("--DeltaX", type=float, default = 1.0, help = "paring term in X direction")
+parser.add_argument("--DeltaY", type=float, default = -1.0, help = "paring term in Y direction")
 
 # Optimizer 
 parser.add_argument("--optimizer", default='trust-ncg', choices=['trust-ncg','None'], help="optimizer")
