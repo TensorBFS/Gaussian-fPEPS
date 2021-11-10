@@ -32,11 +32,10 @@ if __name__ == '__main__':
     def egrad(x): return np.array(jax.grad(lossT)(jnp.array(x)))
     #
     @jax.jit
-    def hvp_loss(x, v):
-        return jax.grad(lambda x: jnp.vdot(jax.grad(lossT)(x), v))(x)
+    def hvp_loss(primals, tangents): return jax.jvp(jax.grad(lossT), primals, tangents)[1]
     # def ehess(x): return np.array(jax.hessian(lossT)(jnp.array(x)))
     # def ehessa(x,a): return np.array(jnp.einsum('ijkl,kl->ij',jax.hessian(lossT)(jnp.array(x)),jnp.array(a)))
-    def ehessa(x,v): return np.array(hvp_loss(jnp.array(x), jnp.array(v)))
+    def ehessa(x,v): return np.array(hvp_loss((jnp.array(x),), (jnp.array(v),)))
     #
     # Optimizer
     manifold = Stiefel(Tsize, Tsize)
@@ -45,4 +44,3 @@ if __name__ == '__main__':
     Xopt = solver.solve(problem,x=T)
 #
     savelog_trivial(Key,Xopt,lossT(Xopt))
-#    

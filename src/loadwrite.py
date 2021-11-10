@@ -12,7 +12,7 @@ def initialT(loadfile,Tsize):
                 f.close()
                 return jnp.reshape(T,(Tsize,Tsize))
             else:
-                print("Load Failed! No /transformer/R in",loadfile," switch to random initialize!")
+                print("Load Failed! No /transformer/T in",loadfile," switch to random initialize!")
                 f.close()
                 return jnp.array(np.random.rand(Tsize,Tsize))
     return jnp.array(np.random.rand(Tsize,Tsize))
