@@ -2,9 +2,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument("--folder", default='./data/',help="where to store results")
-parser.add_argument("--Nv", type=int, default=1, help="Nv")
-parser.add_argument("--Lx", type=int, default=101, help="system size length")
-parser.add_argument("--Ly", type=int, default=101, help="system size length")
+parser.add_argument("--Nv", type=int, default=3, help="Nv")
+parser.add_argument("--Lx", type=int, default=11, help="system size length")
+parser.add_argument("--Ly", type=int, default=11, help="system size length")
 
 # Hamiltonian
 parser.add_argument("--ht", type=float, default = 1.0, help = "Hoping term")

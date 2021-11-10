@@ -38,4 +38,3 @@ end
 io = open("$(dir)/jobs/AnealingABDNv$(Nv).pbs", "w")
 println(io, string)
 close(io)
-
