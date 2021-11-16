@@ -7,6 +7,7 @@ import jax.numpy as jnp
 from jax import jit,value_and_grad
 from loss import optimize_runtime_loss
 from loadwrite import initialT,savelog,savelog_trivial
+from exact import eg
 
 # Manopt
 from pymanopt.manifolds import Stiefel
@@ -15,6 +16,7 @@ from pymanopt.solvers import TrustRegions,ConjugateGradient
 
 if __name__ == '__main__':
 # TEMP:
+    np.random.seed(args.seed)
     Nv = args.Nv
     Tsize = 8*Nv+4
     LoadKey = "/home/qiyang/source/jaxgfpeps/result/Nv{}C{}.h5".format(args.Nv,args.loadlabel)
@@ -27,7 +29,7 @@ if __name__ == '__main__':
     T = U @ V
 #
     lossT = jit(optimize_runtime_loss(Nv=args.Nv,Lx=args.Lx,Ly=args.Ly,
-    hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY),backend='gpu')
+    hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY,Mu=args.Mu),backend='gpu')
 #
     def egrad(x): return np.array(jax.grad(lossT)(jnp.array(x)))
     #
@@ -37,10 +39,15 @@ if __name__ == '__main__':
     # def ehessa(x,a): return np.array(jnp.einsum('ijkl,kl->ij',jax.hessian(lossT)(jnp.array(x)),jnp.array(a)))
     def ehessa(x,v): return np.array(hvp_loss((jnp.array(x),), (jnp.array(v),)))
     #
+    print("Eg = {}\n".format(eg(args.Lx,args.Ly,args.ht,args.DeltaX,args.DeltaY,args.Mu)))
     # Optimizer
     manifold = Stiefel(Tsize, Tsize)
     problem = Problem(manifold=manifold, cost=lossT,egrad=egrad,ehess=ehessa)
-    solver = TrustRegions(maxiter=args.MaxIter)
+    if args.optimizer == 'trust-ncg':
+        solver = TrustRegions(maxiter=args.MaxIter)
+    elif args.optimizer == 'conj-grad':
+        solver = ConjugateGradient(maxiter=args.MaxIter)
+
     Xopt = solver.solve(problem,x=T)
 #
     savelog_trivial(Key,Xopt,lossT(Xopt))
