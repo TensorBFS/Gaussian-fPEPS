@@ -29,10 +29,19 @@ def savelog(writefile,results):
             f["/optimize/normg"] = np.linalg.norm(results.jac)
             f.close()
 
-def savelog_trivial(writefile,x,fun):
+def savelog_trivial(writefile,x,fun,Eg,args):
     if writefile != None:
         print('Save T to',writefile)
         with h5py.File(writefile, 'w') as f:
             f["/transformer/T"] = x
             f["/energy/EABD"] = fun
+            f["/energy/Eg"] = Eg
+            f["/model/Mu"] = args.Mu
+            f["/model/DeltaX"] = args.DeltaX
+            f["/model/DeltrY"] = args.DeltaY
+            f["/model/Hoping"] = args.ht
+            f["/model/Nv"] = args.Nv
+            f["/model/seed"] = args.seed
+            f["/model/Lx"] = args.Lx
+            f["/model/Ly"] = args.Ly
             f.close()

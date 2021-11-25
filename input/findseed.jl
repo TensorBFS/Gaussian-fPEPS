@@ -3,7 +3,7 @@ JobID = ARGS[2]
 dir = "/home/qiyang/source/jaxgfpeps/"
 pythondir = "/home/qiyang/Downloads/Python3.8/bin/python"
 L = 101
-
+Mu = 0.0
 let
 
 string = "#!/bin/bash
@@ -18,7 +18,7 @@ string = "#!/bin/bash
 for seednum in 4000:4100
     seed = seednum+4000*parse(Int,JobID)
 string = string*"
-$(pythondir) $(dir)/src/main.py --Lx $(L) --Ly $(L) --Nv $(Nv) --DeltaX 1.0 --DeltaY -1.0 --label $(seed)  --loadlabel $(seed) --seed $(seed)
+$(pythondir) $(dir)/src/main.py --Mu $(Mu) --Lx $(L) --Ly $(L) --Nv $(Nv) --DeltaX 1.0 --DeltaY -1.0 --label $(seed)  --loadlabel $(seed) --seed $(seed)
 "
 end
 
