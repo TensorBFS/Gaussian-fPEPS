@@ -19,8 +19,11 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
     Nv = args.Nv
     Tsize = 8*Nv+4
-    LoadKey = "/home/qiyang/source/jaxgfpeps/result/Nv{}C{}.h5".format(args.Nv,args.loadlabel)
-    Key = "/home/qiyang/source/jaxgfpeps/result/Nv{}C{}.h5".format(args.Nv,args.label)
+    
+    LoadKey = args.rfile
+    Key = args.wfile
+    # LoadKey = "/home/qiyang/source/jaxgfpeps/result/DWAVE/Nv{}C{}Mu{}.h5".format(args.Nv,args.loadlabel,args.Mu)
+    # Key = "/home/qiyang/source/jaxgfpeps/result/DWAVE/Nv{}C{}Mu{}.h5".format(args.Nv,args.label,args.Mu)
 #
     T = initialT(LoadKey,Tsize)
     #

@@ -1,7 +1,8 @@
 import argparse
 
 parser = argparse.ArgumentParser(description='')
-parser.add_argument("--folder", default='./data/',help="where to store results")
+parser.add_argument("--rfile", default='./data/noname.h5',help="where to store results. h5file")
+parser.add_argument("--wfile", default='./data/noname.h5',help="where to store results. h5file")
 parser.add_argument("--Nv", type=int, default=3, help="Nv")
 parser.add_argument("--Lx", type=int, default=101, help="system size length")
 parser.add_argument("--Ly", type=int, default=101, help="system size length")
@@ -18,11 +19,7 @@ parser.add_argument("--MaxIter", type=int, default = 1000, help= "MaxIteration f
 parser.add_argument("--gtol", type=float, default=1E-7, help="g tol for optimizer")
 parser.add_argument("--OptimDisp", type=int, default=1, help="displya optimization information")
 
-# load and write file
-# parser.add_argument("-load", default="temp.h5", help="load")
-# parser.add_argument("-write", default="temp.h5", help="write")
-parser.add_argument("--label", type=int, default=999,help= "label for multi running")
-parser.add_argument("--loadlabel", type=int, default=999,help= "label for multi running")
+# load and write file)
 parser.add_argument("--seed", type=int, default=999,help= "Seeds")
 
 args = parser.parse_args()
