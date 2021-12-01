@@ -44,4 +44,5 @@ def savelog_trivial(writefile,x,fun,Eg,args):
             f["/model/seed"] = args.seed
             f["/model/Lx"] = args.Lx
             f["/model/Ly"] = args.Ly
+            f["/model/delta"] = args.delta
             f.close()

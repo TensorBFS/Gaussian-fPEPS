@@ -12,6 +12,7 @@ parser.add_argument("--ht", type=float, default = 1.0, help = "Hoping term")
 parser.add_argument("--DeltaX", type=float, default = 1.0, help = "paring term in X direction")
 parser.add_argument("--DeltaY", type=float, default = -1.0, help = "paring term in Y direction")
 parser.add_argument("--Mu", type=float, default = 0.0, help = "Doping term")
+parser.add_argument("--delta",type=float, default = 0.1, help = "Doping hole")
 
 # Optimizer 
 parser.add_argument("--optimizer", default='conj-grad', choices=['trust-ncg','conj-grad'], help="optimizer")

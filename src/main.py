@@ -8,6 +8,7 @@ from jax import jit,value_and_grad
 from loss import optimize_runtime_loss
 from loadwrite import initialT,savelog,savelog_trivial
 from exact import eg
+from deltatomu import solve_mu
 
 # Manopt
 from pymanopt.manifolds import Stiefel
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     T = U @ V
 #
     lossT = jit(optimize_runtime_loss(Nv=args.Nv,Lx=args.Lx,Ly=args.Ly,
-    hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY,Mu=args.Mu),backend='gpu')
+    hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY,Mu=solve_mu(args.DeltaX,args.delta)),backend='gpu')
 #
     def egrad(x): return np.array(jax.grad(lossT)(jnp.array(x)))
     #
