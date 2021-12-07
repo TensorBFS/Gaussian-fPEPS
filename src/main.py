@@ -32,8 +32,9 @@ if __name__ == '__main__':
     U,S,V = np.linalg.svd(T)
     T = U @ V
 #
+    Mu = solve_mu(args.DeltaX,args.delta)
     lossT = jit(optimize_runtime_loss(Nv=args.Nv,Lx=args.Lx,Ly=args.Ly,
-    hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY,Mu=solve_mu(args.DeltaX,args.delta)),backend='gpu')
+    hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY,Mu=Mu),backend='gpu')
 #
     def egrad(x): return np.array(jax.grad(lossT)(jnp.array(x)))
     #
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     # def ehessa(x,a): return np.array(jnp.einsum('ijkl,kl->ij',jax.hessian(lossT)(jnp.array(x)),jnp.array(a)))
     def ehessa(x,v): return np.array(hvp_loss((jnp.array(x),), (jnp.array(v),)))
     #
-    Eg = eg(args.Lx,args.Ly,args.ht,args.DeltaX,args.DeltaY,args.Mu)
+    Eg = eg(args.Lx,args.Ly,args.ht,args.DeltaX,args.DeltaY,Mu) # Will use solved Mu to calculate Eg
     print("Eg = {}\n".format(Eg))
     # Optimizer
     manifold = Stiefel(Tsize, Tsize)
