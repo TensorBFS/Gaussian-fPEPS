@@ -46,9 +46,10 @@ if __name__ == '__main__':
     # def ehess(x): return np.array(jax.hessian(lossT)(jnp.array(x)))
     # def ehessa(x,a): return np.array(jnp.einsum('ijkl,kl->ij',jax.hessian(lossT)(jnp.array(x)),jnp.array(a)))
     def ehessa(x,v): return np.array(hvp_loss((jnp.array(x),), (jnp.array(v),)))
-    #
+#
     Eg = eg(args.Lx,args.Ly,args.ht,args.DeltaX,args.DeltaY,Mu) # Will use solved Mu to calculate Eg
     print("Eg = {}\n".format(Eg))
+    args.Mu = Mu
     # Optimizer
     Xopt=T
 #     manifold = Stiefel(Tsize, Tsize)
@@ -57,7 +58,7 @@ if __name__ == '__main__':
 #         solver = TrustRegions(maxiter=args.MaxIter)
 #     elif args.optimizer == 'conj-grad':
 #         solver = ConjugateGradient(maxiter=args.MaxIter)
-# #
+# 
 #     Xopt = solver.solve(problem,x=T)
 #
     savelog_trivial(Key,Xopt,lossT(Xopt),Eg,args)

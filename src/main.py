@@ -47,6 +47,8 @@ if __name__ == '__main__':
     Eg = eg(args.Lx,args.Ly,args.ht,args.DeltaX,args.DeltaY,Mu) # Will use solved Mu to calculate Eg
     print("Eg = {}\n".format(Eg))
     # Optimizer
+    print("Overwrite Origin Mu")
+    args.Mu = Mu
     manifold = Stiefel(Tsize, Tsize)
     problem = Problem(manifold=manifold, cost=lossT,egrad=egrad,ehess=ehessa)
     if args.optimizer == 'trust-ncg':

@@ -22,4 +22,4 @@ def ntotal(delta,mu):
 
 def solve_mu(dxy,delta):
     def f(x): return ntotal(dxy,x)-(1-delta)
-    return root_scalar(f,bracket=(0.0,1.0)).root
+    return root_scalar(f,bracket=(0.0,10.0)).root
