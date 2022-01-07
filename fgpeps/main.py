@@ -23,8 +23,6 @@ if __name__ == '__main__':
     
     LoadKey = args.rfile
     Key = args.wfile
-    # LoadKey = "/home/qiyang/source/jaxgfpeps/result/DWAVE/Nv{}C{}Mu{}.h5".format(args.Nv,args.loadlabel,args.Mu)
-    # Key = "/home/qiyang/source/jaxgfpeps/result/DWAVE/Nv{}C{}Mu{}.h5".format(args.Nv,args.label,args.Mu)
 #
     T = initialT(LoadKey,Tsize)
     #
