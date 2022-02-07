@@ -1,9 +1,9 @@
 import argparse
 
 parser = argparse.ArgumentParser(description='')
-parser.add_argument("--rfile", default='./data/noname.h5',help="where to store results. h5file")
-parser.add_argument("--wfile", default='./data/noname.h5',help="where to store results. h5file")
-parser.add_argument("--Nv", type=int, default=3, help="Nv")
+parser.add_argument("--rfile", default='./data/default.h5',help="where to store results. h5file")
+parser.add_argument("--wfile", default='./data/default.h5',help="where to store results. h5file")
+parser.add_argument("--Nv", type=int, default=2, help="Nv")
 parser.add_argument("--Lx", type=int, default=101, help="system size length")
 parser.add_argument("--Ly", type=int, default=101, help="system size length")
 
@@ -21,6 +21,6 @@ parser.add_argument("--gtol", type=float, default=1E-7, help="g tol for optimize
 parser.add_argument("--OptimDisp", type=int, default=1, help="displya optimization information")
 
 # load and write file)
-parser.add_argument("--seed", type=int, default=999,help= "Seeds")
+parser.add_argument("--seed", type=int, default=9999,help= "Seeds")
 
 args = parser.parse_args()
