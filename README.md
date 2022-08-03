@@ -1,6 +1,6 @@
 # Gaussian-fPEPS
 
-Translate projected BCS state to fermionic projected entangled pair state(fPEPS).
+Translate the projected BCS state to the fermionic projected entangled pair state(fPEPS).
 
 # About
 
@@ -19,4 +19,4 @@ Using [Pluto](https://github.com/fonsp/Pluto.jl) Notebook and open example.jl
 
 ## Julia dependencies:
 
-[Pluto](https://github.com/fonsp/Pluto.jl) is need to open the example notebook.
+[Pluto](https://github.com/fonsp/Pluto.jl) is needed to open the example notebook.
