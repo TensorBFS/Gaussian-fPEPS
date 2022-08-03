@@ -6,3 +6,4 @@ jobs/*
 *.tar
 *.prof
 *.h5
+__pycache__

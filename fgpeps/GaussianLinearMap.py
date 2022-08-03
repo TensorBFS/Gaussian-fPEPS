@@ -1,7 +1,3 @@
-# Gaussian Linear Map
-# From an Input T or R to Gamma Out
-
-import jax
 import jax.numpy as jnp
 from jax.scipy.linalg import inv
 from ABD import getABD

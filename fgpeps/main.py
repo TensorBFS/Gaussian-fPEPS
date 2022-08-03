@@ -1,59 +1,87 @@
-from args import args
 import jax
 from jax.config import config
 config.update("jax_enable_x64", True)
 import numpy as np
 import jax.numpy as jnp
-from jax import jit,value_and_grad
+from jax import jit
 from loss import optimize_runtime_loss
 from loadwrite import initialT,savelog,savelog_trivial
 from exact import eg
 from deltatomu import solve_mu
 
-# Manopt
+# import Manopt
+import pymanopt
 from pymanopt.manifolds import Stiefel
 from pymanopt import Problem
-from pymanopt.solvers import TrustRegions,ConjugateGradient
+from pymanopt.optimizers import TrustRegions,ConjugateGradient
 
-if __name__ == '__main__':
-# TEMP:
-    np.random.seed(args.seed)
-    Nv = args.Nv
+def gaussian_fpeps(Nv=3,  # Number of virtual fermions on each bond
+                Lx=101, # System size
+                Ly=101, # System size
+                ht=1.0, # Hoping term in BCS hamiltonian
+                DeltaX= 1.0,
+                DeltaY=-1.0,
+                delta=0.0, # the density of holes, Has effect only if solve_mu is True
+                Mu=0.0, # mu is the chemical potential, 
+                solve_mu_from_delta = False, # If this is True, we will solve the chemical potential to match the density of electrons in BCS state
+                LoadFile="./data/default.h5", # Load initial T from this file, if it exists
+                WriteFile="./data/default.h5", # Write information about final Gaussian fPEPS to this file
+                seed=42, # Random Number Generator seed
+                MaxIter=100, # Maximum number of iterations
+                gtol=1E-7, # gtol for optimizer
+                backend="gpu"
+                ):
+
+    np.random.seed(seed)
+    Nv = Nv
     Tsize = 8*Nv+4
     
-    LoadKey = args.rfile
-    Key = args.wfile
-#
+    LoadKey = LoadFile
+    Key = WriteFile
     T = initialT(LoadKey,Tsize)
-    #
-    # Project T to Stiefel Manifold
     U,S,V = np.linalg.svd(T)
     T = U @ V
-#
-    Mu = solve_mu(args.DeltaX,args.delta)
-    lossT = jit(optimize_runtime_loss(Nv=args.Nv,Lx=args.Lx,Ly=args.Ly,
-    hoping=args.ht,DeltaX=args.DeltaX,DeltaY=args.DeltaY,Mu=Mu),backend='gpu')
-#
+
+    if solve_mu_from_delta:
+        print("Overwrite Origin Mu")
+        Mu = solve_mu(DeltaX,delta)
+    
+    lossT = jit(optimize_runtime_loss(Nv=Nv,Lx=Lx,Ly=Ly,
+    hoping=ht,DeltaX=DeltaX,DeltaY=DeltaY,Mu=Mu),backend=backend)
+    
     def egrad(x): return np.array(jax.grad(lossT)(jnp.array(x)))
-    #
+
     @jax.jit
     def hvp_loss(primals, tangents): return jax.jvp(jax.grad(lossT), primals, tangents)[1]
-    # def ehess(x): return np.array(jax.hessian(lossT)(jnp.array(x)))
-    # def ehessa(x,a): return np.array(jnp.einsum('ijkl,kl->ij',jax.hessian(lossT)(jnp.array(x)),jnp.array(a)))
+
     def ehessa(x,v): return np.array(hvp_loss((jnp.array(x),), (jnp.array(v),)))
-    #
-    Eg = eg(args.Lx,args.Ly,args.ht,args.DeltaX,args.DeltaY,Mu) # Will use solved Mu to calculate Eg
+
+    Eg = eg(Lx,Ly,ht,DeltaX,DeltaY,Mu) # Will use solved Mu to calculate Eg
     print("Eg = {}\n".format(Eg))
     # Optimizer
-    print("Overwrite Origin Mu")
-    args.Mu = Mu
+
     manifold = Stiefel(Tsize, Tsize)
-    problem = Problem(manifold=manifold, cost=lossT,egrad=egrad,ehess=ehessa)
-    if args.optimizer == 'trust-ncg':
-        solver = TrustRegions(maxiter=args.MaxIter)
-    elif args.optimizer == 'conj-grad':
-        solver = ConjugateGradient(maxiter=args.MaxIter)
-#
-    Xopt = solver.solve(problem,x=T)
-#
+    @pymanopt.function.numpy(manifold)
+    def cost(x):
+        return lossT(x)
+
+    @pymanopt.function.numpy(manifold)
+    def euclidean_gradient(x):
+        return egrad(x)
+
+    @pymanopt.function.numpy(manifold)
+    def euclidean_hessian(x,y):
+        return ehessa(x,y)
+
+
+    problem = Problem(manifold=manifold, cost=cost,euclidean_gradient=euclidean_gradient,euclidean_hessian=euclidean_hessian)
+    solver = ConjugateGradient()
+
+    result = solver.run(problem)
+    Xopt = result.point
+    args = {"Mu":Mu,"DeltaX":DeltaX,"DeltaY":DeltaY,"delta":delta,
+            "ht":ht,"Lx":Lx,"Ly":Ly,"Nv":Nv,"seed":seed}
     savelog_trivial(Key,Xopt,lossT(Xopt),Eg,args)
+
+if __name__ == '__main__':
+    gaussian_fpeps()

@@ -1,10 +1,6 @@
-# define loss function
-# Contains measuring
-
-from functools import partial
 from jax import vmap
 import jax.numpy as jnp
-from ABD import unitarize,getGammaProjector
+from ABD import getGammaProjector
 from Gin import BatchGammaIn,BatchK
 from GaussianLinearMap import GaussianLinearMap
 

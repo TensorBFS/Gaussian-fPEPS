@@ -1,7 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
 import h5py,os
-from ABD import unitarize
 
 def initialT(loadfile,Tsize):
     if loadfile != None and os.path.isfile(loadfile):
@@ -36,13 +35,13 @@ def savelog_trivial(writefile,x,fun,Eg,args):
             f["/transformer/T"] = x
             f["/energy/EABD"] = fun
             f["/energy/Eg"] = Eg
-            f["/model/Mu"] = args.Mu
-            f["/model/DeltaX"] = args.DeltaX
-            f["/model/DeltrY"] = args.DeltaY
-            f["/model/Hoping"] = args.ht
-            f["/model/Nv"] = args.Nv
-            f["/model/seed"] = args.seed
-            f["/model/Lx"] = args.Lx
-            f["/model/Ly"] = args.Ly
-            f["/model/delta"] = args.delta
+            f["/model/Mu"] = args["Mu"]
+            f["/model/DeltaX"] = args["DeltaX"]
+            f["/model/DeltrY"] = args["DeltaY"]
+            f["/model/Hoping"] = args["ht"]
+            f["/model/Nv"] = args["Nv"]
+            f["/model/seed"] = args["seed"]
+            f["/model/Lx"] = args["Lx"]
+            f["/model/Ly"] = args["Ly"]
+            f["/model/delta"] = args["delta"]
             f.close()

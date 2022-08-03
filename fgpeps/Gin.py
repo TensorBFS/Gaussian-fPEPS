@@ -1,7 +1,3 @@
-# This file contains contruction of Gamma in
-# non differentiable
-
-from functools import partial
 from jax import vmap
 import jax.numpy as jnp
 from jax.scipy.linalg import block_diag

@@ -1,4 +1,3 @@
-import numpy as np
 import jax.numpy as jnp
 from jax.scipy.linalg import eigh
 import jax
@@ -13,7 +12,6 @@ def exact(k,ht,D1X,D1Y,Mu):
     w,v = eigh(M)
     N = w.shape[0]//2
     return (jnp.sum(w[0:N])+jnp.sum(jnp.diag(t)))
-    # return (jnp.sum(w[w.real<0])+jnp.sum(jnp.diag(t)))
 
 KSet = jnp.array([[1,0],[1,2],[1,3]])
 def eg(Lx,Ly,ht,D1X,D1Y,Mu):

@@ -1,6 +1,3 @@
-# Contains Functions to construct ABD
-
-from functools import partial
 from jax import jit
 import jax.numpy as jnp
 from jax.scipy.linalg import block_diag
