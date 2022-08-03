@@ -15,7 +15,7 @@ from pymanopt.manifolds import Stiefel
 from pymanopt import Problem
 from pymanopt.optimizers import TrustRegions,ConjugateGradient
 
-def gaussian_fpeps(Nv=3,  # Number of virtual fermions on each bond
+def gaussian_fpeps(Nv=2,  # Number of virtual fermions on each bond
                 Lx=101, # System size
                 Ly=101, # System size
                 ht=1.0, # Hoping term in BCS hamiltonian
@@ -82,6 +82,8 @@ def gaussian_fpeps(Nv=3,  # Number of virtual fermions on each bond
     args = {"Mu":Mu,"DeltaX":DeltaX,"DeltaY":DeltaY,"delta":delta,
             "ht":ht,"Lx":Lx,"Ly":Ly,"Nv":Nv,"seed":seed}
     savelog_trivial(Key,Xopt,lossT(Xopt),Eg,args)
+    return Xopt
 
 if __name__ == '__main__':
-    gaussian_fpeps()
+    Topt = gaussian_fpeps()
+    print("Optimized T:\n",Topt)
