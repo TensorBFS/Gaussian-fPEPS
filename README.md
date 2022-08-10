@@ -4,7 +4,7 @@ Translate the projected BCS state to the fermionic projected entangled pair stat
 
 # About
 
-Code for the paper "Projected d-wave superconducting state: a fermionic projected entangled pair state study".
+Demo code for the paper [Projected d-wave superconducting state: a fermionic projected entangled pair state study](https://arxiv.org/abs/2208.04566).
 
 
 # Example
