@@ -28,6 +28,7 @@ dependencies = [
   "numpy",
   "pymanopt==2.0.0",
   "h5py",
+  "hydra-core",
   "jax==0.4.26",
   "jaxlib @ https://storage.googleapis.com/jax-releases/cuda12/jaxlib-0.4.26+cuda12.cudnn89-cp311-cp311-manylinux2014_x86_64.whl "
 ]

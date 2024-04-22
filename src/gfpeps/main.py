@@ -15,7 +15,9 @@ from pymanopt.manifolds import Stiefel
 from pymanopt import Problem
 from pymanopt.optimizers import TrustRegions,ConjugateGradient
 
-def gaussian_fpeps(Nv=2,  # Number of virtual fermions on each bond
+def gaussian_fpeps(cfg):
+    
+    Nv=2,  # Number of virtual fermions on each bond
                 Lx=101, # System size
                 Ly=101, # System size
                 ht=1.0, # Hoping term in BCS hamiltonian
@@ -31,13 +33,19 @@ def gaussian_fpeps(Nv=2,  # Number of virtual fermions on each bond
                 gtol=1E-7, # gtol for optimizer
                 backend="gpu"
                 ):
-
-    np.random.seed(seed)
-    Nv = Nv
-    Tsize = 8*Nv+4
+    # unpack cfg
+    np.random.seed(cfg.params.seed)
+    Nv = cfg.params.Nv
+    Lx, Ly = cfg.params.Lx, cfg.params.Ly
+    LoadKey, WriteKey  = cfg.file.LoadFile, cfg.file.WriteFile
     
-    LoadKey = LoadFile
-    Key = WriteFile
+    cfgh = cfg.hamiltonian
+    ht = cfgh.ht
+    DeltaX, DeltaY = cfgh.DeltaX, cfgh.DeltaY
+    delta, Mu = cfgh.delta, cfgh.Mu
+
+    
+    Tsize = 8*Nv+4
     T = initialT(LoadKey,Tsize)
     U,S,V = np.linalg.svd(T)
     T = U @ V
@@ -47,7 +55,7 @@ def gaussian_fpeps(Nv=2,  # Number of virtual fermions on each bond
         Mu = solve_mu(DeltaX,delta)
     
     lossT = jit(optimize_runtime_loss(Nv=Nv,Lx=Lx,Ly=Ly,
-    hoping=ht,DeltaX=DeltaX,DeltaY=DeltaY,Mu=Mu),backend=backend)
+    hoping=ht,DeltaX=DeltaX,DeltaY=DeltaY,Mu=Mu),backend=cfg.backend)
     
     def egrad(x): return np.array(jax.grad(lossT)(jnp.array(x)))
 
@@ -81,9 +89,16 @@ def gaussian_fpeps(Nv=2,  # Number of virtual fermions on each bond
     Xopt = result.point
     args = {"Mu":Mu,"DeltaX":DeltaX,"DeltaY":DeltaY,"delta":delta,
             "ht":ht,"Lx":Lx,"Ly":Ly,"Nv":Nv,"seed":seed}
-    savelog_trivial(Key,Xopt,lossT(Xopt),Eg,args)
+    savelog_trivial(WriteKey,Xopt,lossT(Xopt),Eg,args)
     return Xopt
 
+# hydra config
+import hydra
+from omegaconf import DictConfig
+
+@hydra.main(version_base=None, config_path="conf", config_name="gfpeps")
+def main_app(cfg: DictConfig) -> None:
+    return gaussian_fpeps(cfg)
+
 if __name__ == '__main__':
-    Topt = gaussian_fpeps()
-    print("Optimized T:\n",Topt)
+    main_app()
