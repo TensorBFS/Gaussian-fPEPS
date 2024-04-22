@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "gaussian-fpeps"
+name = "gfpeps"
 dynamic = ["version"]
-description = ''
+description = 'Gaussian Fermionic Tensor Network Toolkit'
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -24,15 +24,24 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = [
+  "numpy",
+  "pymanopt==2.0.0",
+  "h5py",
+  "jax==0.4.26",
+  "jaxlib @ https://storage.googleapis.com/jax-releases/cuda12/jaxlib-0.4.26+cuda12.cudnn89-cp311-cp311-manylinux2014_x86_64.whl "
+]
 
 [project.urls]
-Documentation = "https://github.com/unknown/gaussian-fpeps#readme"
-Issues = "https://github.com/unknown/gaussian-fpeps/issues"
-Source = "https://github.com/unknown/gaussian-fpeps"
+Documentation = "https://github.com/unknown/gfpeps#readme"
+Issues = "https://github.com/unknown/gfpeps/issues"
+Source = "https://github.com/unknown/gfpeps"
 
 [tool.hatch.version]
-path = "src/gaussian_fpeps/__about__.py"
+path = "src/gfpeps/__about__.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.envs.default]
 dependencies = [
@@ -59,19 +68,19 @@ dependencies = [
   "mypy>=1.0.0",
 ]
 [tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/gaussian_fpeps tests}"
+check = "mypy --install-types --non-interactive {args:src/gfpeps tests}"
 
 [tool.coverage.run]
-source_pkgs = ["gaussian_fpeps", "tests"]
+source_pkgs = ["gfpeps", "tests"]
 branch = true
 parallel = true
 omit = [
-  "src/gaussian_fpeps/__about__.py",
+  "src/gfpeps/__about__.py",
 ]
 
 [tool.coverage.paths]
-gaussian_fpeps = ["src/gaussian_fpeps", "*/gaussian-fpeps/src/gaussian_fpeps"]
-tests = ["tests", "*/gaussian-fpeps/tests"]
+gfpeps = ["src/gfpeps", "*/gfpeps/src/gfpeps"]
+tests = ["tests", "*/gfpeps/tests"]
 
 [tool.coverage.report]
 exclude_lines = [
