@@ -8,3 +8,4 @@ jobs/*
 *.h5
 __pycache__
 dist
+outputs
