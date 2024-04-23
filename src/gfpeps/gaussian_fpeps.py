@@ -3,10 +3,11 @@ jax.config.update("jax_enable_x64", True)
 import numpy as np
 import jax.numpy as jnp
 from jax import jit
-from .loss import optimize_runtime_loss
+from .loss import optimize_runtime_loss, energy_function
 from .loadwrite import initialT,savelog,savelog_trivial
 from .exact import eg
 from .deltatomu import solve_mu
+from .measure import measure
 import logging
 
 # import Manopt
@@ -80,8 +81,11 @@ def gaussian_fpeps(cfg):
 
     logging.info(f"Optimization done!, final cost: {result.cost}, gnorm: {result.gradient_norm }")
     
+    # measure final result
+    # rhoup, rhodn, kappa = measure(cfg,result.point)
+    
     Xopt = result.point
     args = {"Mu":Mu,"DeltaX":DeltaX,"DeltaY":DeltaY,"delta":delta,
             "ht":ht,"Lx":Lx,"Ly":Ly,"Nv":Nv,"seed":cfg.params.seed}
-    savelog_trivial(WriteKey,Xopt,lossT(Xopt),Eg,args)
+    savelog_trivial(WriteKey,Xopt,lossT(Xopt),Eg,args, measure(cfg,result.point))
     return Xopt

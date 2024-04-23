@@ -15,8 +15,8 @@ hamiltonian:
   solve_mu_from_delta: false # whether to solve chemical potential from hole density
 
 file:
-  # LoadFile: "./data/default.h5" # Load initial T from this file, if it exists
-  LoadFile: ""
+  LoadFile: "./data/default.h5" # Load initial T from this file, if it exists
+  # LoadFile: ""
   WriteFile: "./data/default.h5" # Write information about final Gaussian fPEPS to this file
 
 optimizer:
