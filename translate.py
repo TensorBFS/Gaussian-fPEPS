@@ -49,36 +49,50 @@ def cor_trans_matrix(cm):
     S = np.block([[one,one],[+one*1.0j ,-one*1.0j]])
     return S.T @ cm @ S
 
+# Tested, respect to the original Julia code
 def fiducial_hamiltonian(hρ,hκ):
     N = hρ.shape[0]
-    dim = 2**N
+    
+    # symmetry of hρ and hκ
     assert hρ.shape[1]==N and hκ.shape[1]==N and hκ.shape[1]==N
     assert np.linalg.norm(hρ-hρ.T.conj())<1E-10 and np.linalg.norm(hκ + hκ.T) < 1E-10
     
     H = np.zeros((2**N,2**N),dtype=np.complex128)
-
+    
     for i in range(N):
         for j in range(N):
             for k in range(2**N):
                 bk = bitarray.util.int2ba(k,length=N)
                 bk.reverse()
-
-                parity = (bk.count(1,i,N) + bk.count(1,j,N)) % 2
-                
-                if bk[i]==0:
-                    if bk[j] == 1:
-                        bk[i] = 1
+                parity = (bk.count(1,i+1,N) + bk.count(1,j+1,N)) % 2
+                if bk[j]==1:
+                    if bk[i] == 0 or i == j:
                         bk[j] = 0
+                        bk[i] = 1
+                        bk.reverse()
                         target = bitarray.util.ba2int(bk)
-                        H[target,k] += hρ[i,j] * (-1)**parity
-                    elif bk[j] == 0:
+                        parity += int(j > i)
+                        H[target,k] += 2 * hρ[i,j] * (-1)**parity
+                    elif bk[i] == 1:
+                        bk[i] = 0
+                        bk[j] = 0
+                        bk.reverse()
+                        target = bitarray.util.ba2int(bk)
+                        parity += int(i > j)
+                        H[target,k] += hκ[i,j] * (-1)**parity
+                elif bk[j]==0:
+                    if bk[i]==0:
                         bk[j] = 1
                         bk[i] = 1
+                        bk.reverse()
                         target = bitarray.util.ba2int(bk)
-                        H[target,k] -= hκ[i,j].conj() * (-1)**parity    
-    return H
+                        parity += int(i > j)
+                        H[target,k] -= hκ[i,j].conj() * (-1)**parity
 
-def translate(Gamma,Nv):
+    return (H + H.T.conj())/2
+
+def translate(Gamma):
+    assert Gamma.shape[0] % 2 == 0
     N = Gamma.shape[0]//2
     
     trans_h = cor_trans_matrix(-Gamma)
@@ -86,10 +100,11 @@ def translate(Gamma,Nv):
     hρ = -1.0j*trans_h[0:N,N:2*N].T
     hκ = 1.0j*trans_h[0:N,0:N]
     local_h = fiducial_hamiltonian(hρ,hκ)
-    tw,tv = np.linalg.eig(local_h)
+    tw,tv = np.linalg.eigh(local_h) # eigh to search lowest eigenvalue
     return tv[:,0]
 
-def paritygate(n):
+def paritygate(Nv):
+    n = 2**Nv
     S = np.eye(n)
     for i in range(n):
         if bitarray.util.int2ba(i,int(np.ceil(np.log(n)/np.log(2)))).count() %2 !=0: 
@@ -99,35 +114,43 @@ def paritygate(n):
 def fsign(n_list):
     result = 0
     for i in range(1,len(n_list)):
-        result += n[i]*sum(n[0:i-1])
+        result += n_list[i]*sum(n_list[0:i])
     return (-1)**(result % 2)
 
 def bondgate(Nv):
+    p = np.zeros(2**Nv)
+    for i in range(2**Nv):
+        n_list = list(map(int,bitarray.util.int2ba(i,Nv).to01()))
+        p[i] = fsign(n_list)
+    return np.diag(p)
+
+def add_gates(tensor,Nv):
     
-    n = np.zeros((Nv,Nv)) # store n_i
-    p = zeros([2 for i =1:Nv]...)
-    for index in ind
-        for i = 1:Nv
-            n[i] = Tuple(index)[i]
-        end
-        n = n.-1
-        p[index] = fsign(n)
-    end
-    return Array(Diagonal(p[:]))
-end
+    tensor = np.einsum("ulfdr,iu->ilfdr",tensor, bondgate(Nv)) # bond gate in Eq.(16). on u
+    tensor = np.einsum("ulfdr,il->uifdr",tensor, bondgate(Nv)) # bond gate in Eq.(16). on l
+    tensor = np.einsum("ulfdr,iu->ilfdr",tensor, paritygate(Nv)) # As ulfdr  vs  (ud-rl in ABD)
 
-
+    return tensor
 
 def main(input_file):
     with h5py.File(input_file, "r") as fid:
-        Nv = fid["/model/Nv"][()]
+        Nv = int(fid["/model/Nv"][()])
         T = fid["/transformer/T"][0:8*Nv+4,0:8*Nv+4]
         
     Gamma = getG(T,Nv)
-    tensor_0 = translate(Gamma,Nv)
+    tensor_0 = translate(Gamma)
     
-    assert abs(tensor_0[1])< 1E-10 # check parity
-    tensor_1 = np.reshape(tensor_0,(2**Nv,2**Nv,4,2**Nv,2**Nv))
+    assert abs(tensor_0[0])< 1E-10 # check parity 
+    tensor_1 = np.reshape(tensor_0,(2**Nv,2**Nv,4,2**Nv,2**Nv)).transpose(4,3,2,1,0) # orderf of this reshape
+    tensor_final = add_gates(tensor_1,Nv)
+    return tensor_final
 
 if __name__ == "__main__":
-    main(input_file = "/home/yangqi/jaxgfpeps/data/default.h5")
+    np.set_printoptions(precision=6)
+    input_file = "/home/yangqi/jaxgfpeps/data/default.h5"
+    tensor = main(input_file)
+    
+    with h5py.File("tensor.h5", "cw") as fid:
+        fid.create_dataset("/tensor", data=tensor) # order: ulfdr
+    
+    # fac = 0.396379-0.918087j # coefficient to match the original code
