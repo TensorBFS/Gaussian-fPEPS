@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gfpeps"
+dynamic = ["version"]
+description = 'Gaussian Fermionic Tensor Network Toolkit'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Qi Yang", email = "qiyang@mail.ustc.edu.cn" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "numpy",
+  "pymanopt==2.0.0",
+  "h5py",
+  "bitarray",
+  "hydra-core",
+  "jax==0.4.26",
+  "jaxlib @ https://storage.googleapis.com/jax-releases/cuda12/jaxlib-0.4.26+cuda12.cudnn89-cp311-cp311-manylinux2014_x86_64.whl "
+]
+
+[project.urls]
+Documentation = "https://github.com/unknown/gfpeps#readme"
+Issues = "https://github.com/unknown/gfpeps/issues"
+Source = "https://github.com/unknown/gfpeps"
+
+[tool.hatch.version]
+path = "src/gfpeps/__about__.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.envs.default]
+dependencies = [
+  "coverage[toml]>=6.5",
+  "pytest",
+]
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+  "- coverage combine",
+  "coverage report",
+]
+cov = [
+  "test-cov",
+  "cov-report",
+]
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.types]
+dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/gfpeps tests}"
+
+[tool.coverage.run]
+source_pkgs = ["gfpeps", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/gfpeps/__about__.py",
+]
+
+[tool.coverage.paths]
+gfpeps = ["src/gfpeps", "*/gfpeps/src/gfpeps"]
+tests = ["tests", "*/gfpeps/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]

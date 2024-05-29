@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from jax.scipy.linalg import eigh
 import jax
-from Gin import BatchK
+from .Gin import BatchK
 
 def exact(k,ht,D1X,D1Y,Mu):
     D = D1X*jnp.cos(k[0])+D1Y*jnp.cos(k[1])

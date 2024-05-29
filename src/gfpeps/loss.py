@@ -1,8 +1,8 @@
 from jax import vmap
 import jax.numpy as jnp
-from ABD import getGammaProjector
-from Gin import BatchGammaIn,BatchK
-from GaussianLinearMap import GaussianLinearMap
+from .ABD import getGammaProjector
+from .Gin import BatchGammaIn,BatchK
+from .GaussianLinearMap import GaussianLinearMap
 
 def energy_function(hoping=1.0,DeltaX=0.0,DeltaY=0.0,Mu=0.0,Lx=100,Ly=100):
     batch_k = BatchK(Lx,Ly)
