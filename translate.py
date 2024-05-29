@@ -150,7 +150,7 @@ if __name__ == "__main__":
     input_file = "/home/yangqi/jaxgfpeps/data/default.h5"
     tensor = main(input_file)
     
-    with h5py.File("tensor.h5", "cw") as fid:
+    with h5py.File("tensor.h5", "w") as fid:
         fid.create_dataset("/tensor", data=tensor) # order: ulfdr
     
     # fac = 0.396379-0.918087j # coefficient to match the original code
