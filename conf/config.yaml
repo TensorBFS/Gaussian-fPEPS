@@ -1,2 +1,2 @@
-default:
-  - gfpeps: test
+defaults:
+  - gfpeps: Nv1FF

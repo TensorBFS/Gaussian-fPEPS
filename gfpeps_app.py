@@ -7,9 +7,10 @@ from omegaconf import DictConfig
 import logging
 log = logging.getLogger(__name__)
 
-@hydra.main(version_base=None, config_path="conf/gfpeps", config_name="default")
+@hydra.main(version_base=None, config_path="conf", config_name="config")
 def main_app(cfg: DictConfig) -> None:
-    return gaussian_fpeps(cfg)
+    logging.info(cfg)
+    return gaussian_fpeps(cfg["gfpeps"])
 
 if __name__ == '__main__':
     main_app()

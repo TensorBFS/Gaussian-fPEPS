@@ -7,6 +7,9 @@ import h5py
 import bitarray
 import bitarray.util
 
+import hydra
+from omegaconf import DictConfig
+
 def skew(x): return x-x.T
 
 def permuteG(G,Nv):
@@ -132,7 +135,9 @@ def add_gates(tensor,Nv):
 
     return tensor
 
-def main(input_file):
+@hydra.main(version_base=None, config_path="conf", config_name="config")
+def main_app(cfg: DictConfig) -> None:
+    input_file = cfg["gfpeps"]["file"]["WriteFile"]
     with h5py.File(input_file, "r") as fid:
         Nv = int(fid["/model/Nv"][()])
         T = fid["/transformer/T"][0:8*Nv+4,0:8*Nv+4]
@@ -140,17 +145,19 @@ def main(input_file):
     Gamma = getG(T,Nv)
     tensor_0 = translate(Gamma)
     
-    assert abs(tensor_0[0])< 1E-10 # check parity 
+    assert abs(tensor_0[1])< 1E-10 # check parity to be even parity
     tensor_1 = np.reshape(tensor_0,(2**Nv,2**Nv,4,2**Nv,2**Nv)).transpose(4,3,2,1,0) # orderf of this reshape
     tensor_final = add_gates(tensor_1,Nv)
+    
+    tensor_file = cfg["gfpeps"]["file"]["TensorFile"]
+    with h5py.File(tensor_file, "w") as fid:
+        fid.create_dataset("/tensor", data=tensor_final) # order: ulfdr
+        
     return tensor_final
 
 if __name__ == "__main__":
     np.set_printoptions(precision=6)
-    input_file = "/home/yangqi/jaxgfpeps/data/default.h5"
-    tensor = main(input_file)
+    tensor = main_app()
     
-    with h5py.File("tensor.h5", "w") as fid:
-        fid.create_dataset("/tensor", data=tensor) # order: ulfdr
     
     # fac = 0.396379-0.918087j # coefficient to match the original code
