@@ -18,6 +18,7 @@ file:
   LoadFile: "./data/default.h5" # Load initial T from this file, if it exists
   # LoadFile: ""
   WriteFile: "./data/default.h5" # Write information about final Gaussian fPEPS to this file
+  SaveEachSteps: True
 
 optimizer:
   MaxIter: 100

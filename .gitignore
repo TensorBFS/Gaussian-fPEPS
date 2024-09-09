@@ -4,6 +4,7 @@
 *.pbs
 jobs/*
 *.tar
+data/**
 *.prof
 *.h5
 __pycache__

@@ -74,7 +74,7 @@ def gaussian_fpeps(cfg):
     result = solver.run(problem, initial_point=T)
     log_cost = np.array(result.log["iterations"]["cost"])
     log_gnorm = np.array(result.log["iterations"]["gradient_norm"])
-
+    
     logging.info("Iterations \t Cost \t Gradient Norm")
     for iter in range(len(log_cost)):
         logging.info(f"{iter} \t {log_cost[iter]} \t {log_gnorm[iter]}")
@@ -87,5 +87,10 @@ def gaussian_fpeps(cfg):
     Xopt = result.point
     args = {"Mu":Mu,"DeltaX":DeltaX,"DeltaY":DeltaY,"delta":delta,
             "ht":ht,"Lx":Lx,"Ly":Ly,"Nv":Nv,"seed":cfg.params.seed}
-    savelog_trivial(WriteKey,Xopt,lossT(Xopt),Eg,args, measure(cfg,result.point))
+    savelog_trivial(WriteKey,Xopt,lossT(Xopt),Eg,args, measure(cfg,Xopt))
+    
+    if cfg.file.SaveEachSteps:
+        for iter in range(len(log_cost)):
+            Xopt = np.array(result.log["iterations"]["point"])[iter]
+            savelog_trivial(WriteKey[:-3]+f"-iter{iter}"+WriteKey[-3:],Xopt,lossT(Xopt), Eg, args, measure(cfg, Xopt))
     return Xopt
