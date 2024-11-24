@@ -31,7 +31,8 @@ dependencies = [
   "bitarray",
   "hydra-core",
   "jax==0.4.26",
-  "jaxlib @ https://storage.googleapis.com/jax-releases/cuda12/jaxlib-0.4.26+cuda12.cudnn89-cp311-cp311-manylinux2014_x86_64.whl "
+  "jaxlib==0.4.26"
+  # "jaxlib @ https://storage.googleapis.com/jax-releases/cuda12/jaxlib-0.4.26+cuda12.cudnn89-cp311-cp311-manylinux2014_x86_64.whl "
 ]
 
 [project.urls]
@@ -42,6 +43,10 @@ Source = "https://github.com/unknown/gfpeps"
 [tool.hatch.version]
 path = "src/gfpeps/__about__.py"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/gfpeps"]
+
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
@@ -49,6 +54,7 @@ allow-direct-references = true
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
+  "pdoc",
 ]
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"

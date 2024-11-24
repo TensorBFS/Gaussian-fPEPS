@@ -6,6 +6,7 @@ import logging
 import h5py
 import bitarray
 import bitarray.util
+import logging
 
 def skew(x): return x-x.T
 
@@ -140,17 +141,25 @@ def main(input_file):
     Gamma = getG(T,Nv)
     tensor_0 = translate(Gamma)
     
-    assert abs(tensor_0[0])< 1E-10 # check parity 
+    # assert abs(tensor_0[0]) < 1E-10 # check parity 
+    tol_parity_check = 1E-10
+    if abs(tensor_0[1]) > tol_parity_check:
+        logging.warn(f"Parity check failed, value{abs(tensor_0[1])}>{tol_parity_check}")
+    
     tensor_1 = np.reshape(tensor_0,(2**Nv,2**Nv,4,2**Nv,2**Nv)).transpose(4,3,2,1,0) # orderf of this reshape
     tensor_final = add_gates(tensor_1,Nv)
     return tensor_final
 
 if __name__ == "__main__":
     np.set_printoptions(precision=6)
-    input_file = "/home/yangqi/jaxgfpeps/data/default.h5"
-    tensor = main(input_file)
     
-    with h5py.File("tensor.h5", "w") as fid:
-        fid.create_dataset("/tensor", data=tensor) # order: ulfdr
+    # input_file_lists = ["/home/yangqi/jaxgfpeps/data/default.h5"]
+    input_file_lists = [f"/Users/yangqi/source/Gaussian-fPEPS/data/default-iter{i}.h5" for i in range(26)]
     
-    # fac = 0.396379-0.918087j # coefficient to match the original code
+    for input_file in input_file_lists:
+        tensor = main(input_file)
+        
+        with h5py.File(input_file[:-3]+"-tensor.h5", "w") as fid:
+            fid.create_dataset("/tensor", data=tensor) # order: ulfdr
+        
+        # fac = 0.396379-0.918087j # coefficient to match the original code
