@@ -1,0 +1,35 @@
+site_name: Gaussian-fPEPS
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      use_pygments: true
+  - pymdownx.superfences
+  - admonition
+  - footnotes
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css
+
+nav:
+  - Home: index.md
+  - Theory:
+    - 'Majorana': theory/majorana.md
+    - 'Correlator': theory/correlator.md
+    - 'Kernels': theory/kernels.md
+  - API:
+    - 'Overview': api/index.md

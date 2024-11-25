@@ -10,3 +10,5 @@ data/**
 __pycache__
 dist
 outputs
+.idea
+site

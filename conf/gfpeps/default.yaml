@@ -1,5 +1,6 @@
 params:
   Nv: 1 # Number of virtual fermions on each bond
+  Nf: 2 # Number of physical fermions
   seed: 44 # Random seed
 
 lattice:

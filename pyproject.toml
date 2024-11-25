@@ -54,7 +54,9 @@ allow-direct-references = true
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
-  "pdoc",
+  "mkdocs",
+  "mkdocs-material",
+  "pymdown-extensions"
 ]
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
@@ -63,6 +65,8 @@ cov-report = [
   "- coverage combine",
   "coverage report",
 ]
+docs-serve = "mkdocs serve"
+docs-build = "mkdocs build"
 cov = [
   "test-cov",
   "cov-report",
