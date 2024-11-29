@@ -40,6 +40,6 @@ def kitaev_honeycomb_1half_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0):
     Jk = Jz - Jx * jnp.exp(1j * kx) - Jy * jnp.exp(1j * ky)
     
     # Construct antisymmetric matrix
-    h_k = jnp.array([[0, Jk], [-Jk, 0]])
+    h_k = jnp.array([[0, Jk], [-Jk, 0]])/4.0
     
     return h_k
