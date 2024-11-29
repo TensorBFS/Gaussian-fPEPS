@@ -29,7 +29,7 @@ class GaussianfPEPS(object):
 
     kernel_functions: callable = None
 
-    def __init__(self, Lx, Ly, kernel_params=None, *, Nv=None, kernel_names=None, seed=123):
+    def __init__(self, Lx, Ly, kernel_params=None, T=None, *, Nv=None, kernel_names=None, seed=123):
         self.Lx = Lx
         self.Ly = Ly
         self.Nv = Nv
@@ -39,7 +39,11 @@ class GaussianfPEPS(object):
         self.kernel_functions = kernel_info[0]
         self.Nf = kernel_info[1]
 
-        self.T = initialize_random_T(seed, 2*self.Nf + 8*self.Nv)
+        if T is not None:
+            assert T.shape == (2*self.Nf + 8*self.Nv, 2*self.Nf + 8*self.Nv)
+            self.T = T
+        else:
+            self.T = initialize_random_T(seed, 2*self.Nf + 8*self.Nv)
 
         self.loss = make_loss(self.kernel_functions, Lx=Lx, Ly=Ly, Nf=self.Nf, Nv=self.Nv, **self.kernel_params)
 

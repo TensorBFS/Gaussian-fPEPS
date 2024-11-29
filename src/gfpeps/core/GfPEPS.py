@@ -1,6 +1,7 @@
 import jax
 from dataclasses import dataclass
 
+
 @dataclass
 class GaussianfPEPS(object):
     """A Runtime Object to define everything you need to run Gaussian fPEPS calculation, store everything you need.
@@ -26,7 +27,7 @@ class GaussianfPEPS(object):
 
     kernel_functions: callable = None
 
-    def __init__(self, Lx, Ly, kernel_params=None, *, Nv=None, kernel_names=None, seed=123):
+    def __init__(self, Lx, Ly, kernel_params=None, *, Nv=None, kernel_names={}, seed=123):
         self.Lx = Lx
         self.Ly = Ly
         self.Nv = Nv
