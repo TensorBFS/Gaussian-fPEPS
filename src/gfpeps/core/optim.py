@@ -16,7 +16,8 @@ def optim(gfpeps:GaussianfPEPS, log_verbosity=1, max_iterations=1000):
 
     problem = Problem(manifold=manifold, 
                       cost=cost)
-    solver = ConjugateGradient(log_verbosity=log_verbosity, max_iterations=max_iterations)
+    solver = ConjugateGradient(verbosity=0, 
+    log_verbosity=log_verbosity, max_iterations=max_iterations)
 
     result = solver.run(problem, initial_point=gfpeps.T)
     gfpeps.T = result.point

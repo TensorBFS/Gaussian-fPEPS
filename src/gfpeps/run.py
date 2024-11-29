@@ -5,6 +5,7 @@ This module provides a simple example of using the Gaussian fPEPS implementation
 for ground state optimization of a BCS pairing model on a square lattice.
 """
 import os
+import sys
 import h5py
 import logging
 import jax
@@ -19,7 +20,8 @@ def setup_logging():
     """Set up logging configuration."""
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        stream=sys.stdout
     )
 
 def run(Lx, Ly, Nv, kernel_names, kernel_params, max_iterations=1000, seed=42, simdir=None):

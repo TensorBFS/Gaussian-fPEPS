@@ -28,8 +28,8 @@ dependencies = [
   "hydra-core",
   "fire",
   "jaxtyping",
-  "jax==0.4.26",
-  "jaxlib==0.4.26"
+  "jax",
+  "jaxlib"
   # "jaxlib @ https://storage.googleapis.com/jax-releases/cuda12/jaxlib-0.4.26+cuda12.cudnn89-cp311-cp311-manylinux2014_x86_64.whl "
 ]
 

@@ -7,7 +7,7 @@ jobs/*
 data/**
 *.prof
 *.h5
-__pycache__
+**/__pycache__
 dist
 outputs
 .idea

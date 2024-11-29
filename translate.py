@@ -10,6 +10,7 @@ import logging
 
 def skew(x): return x-x.T
 
+
 def permuteG(G,Nv):
     def permutation_order(Nv):
         match Nv:

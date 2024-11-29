@@ -140,6 +140,8 @@ def kitaev_honeycomb_kernel_s12(k, Jx=1.0, Jy=1.0, Jz=1.0):
     return h_k
 ```
 
+$Eg=-0.196824657567299$, For $D=4$ we can obtain $E=-0.1967948$ and for $D=8$, $E=-0.1968234$
+
 ### Spin-$\frac{3}{2}$ Majorana Form
 For spin-$\frac{3}{2}$ systems, we have four types of Majorana operators at each site:
 
