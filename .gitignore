@@ -12,3 +12,4 @@ dist
 outputs
 .idea
 site
+**/.DS_Store

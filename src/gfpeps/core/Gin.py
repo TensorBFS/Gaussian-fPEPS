@@ -12,7 +12,7 @@ def batched_k(Lx, Ly):
     Returns:
         jnp.ndarray: Array of shape (Lx*Ly, 2) containing momentum points.
     """
-    X, Y = jnp.meshgrid((jnp.arange(Lx)-0.5)/Lx, jnp.arange(Ly)/Ly)
+    X, Y = jnp.meshgrid((jnp.arange(Lx)+0.5)/Lx, jnp.arange(Ly)/Ly)
     return 2 * jnp.pi * jnp.array([X.flatten(), Y.flatten()]).T
 
 def batched_Gin(Lx, Ly, Nv):

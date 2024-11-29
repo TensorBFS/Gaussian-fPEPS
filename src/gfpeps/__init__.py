@@ -2,5 +2,5 @@
 #
 # SPDX-License-Identifier: MIT
 
-__all__ = ['gaussian_fpeps']
-from .gaussian_fpeps import gaussian_fpeps
+__all__ = ['run']
+from .run import run

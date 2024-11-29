@@ -7,7 +7,7 @@ name = "gfpeps"
 dynamic = ["version"]
 description = 'Gaussian Fermionic Tensor Network Toolkit'
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 license = "MIT"
 keywords = []
 authors = [
@@ -16,17 +16,13 @@ authors = [
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-  "numpy",
-  "pymanopt==2.0.0",
+  "numpy<2",
+  "pymanopt[jax]",
   "h5py",
   "bitarray",
   "hydra-core",
@@ -56,8 +52,13 @@ dependencies = [
   "pytest",
   "mkdocs",
   "mkdocs-material",
-  "pymdown-extensions"
+  "pymdown-extensions",
+  "jupyter",
+  "ipykernel"
 ]
+type = "virtual"
+path = ".venv"
+
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
 test-cov = "coverage run -m pytest {args:tests}"
