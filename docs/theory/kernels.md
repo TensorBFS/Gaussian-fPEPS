@@ -139,8 +139,10 @@ def kitaev_honeycomb_kernel_s12(k, Jx=1.0, Jy=1.0, Jz=1.0):
     h_k = jnp.array([[0, Jk], [-Jk, 0]])
     return h_k
 ```
-
-$Eg=-0.196824657567299$, For $D=4$ we can obtain $E=-0.1967948$ and for $D=8$, $E=-0.1968234$
+#### Result:
+- $D=4\ \ , E=-0.1967948$
+- $D=8\ \ , E=-0.1968234$
+- $D=\infty,E=-0.196824657567299$
 
 ### Spin-$\frac{3}{2}$ Majorana Form
 For spin-$\frac{3}{2}$ systems, we have four types of Majorana operators at each site:
@@ -159,7 +161,7 @@ Thus, it is not quadratic, if we want to consider mean field theory, we should o
 Its mean field form is
 
 $$\begin{aligned}
-H_{\mathrm{MF}}(\{u\})& =-\frac{i}{4}\sum_{\langle ij\rangle_a}J_a u_{ij}^a\tilde{\theta}_i^a\tilde{\theta}_j^a-iD_z\sum_i\theta_i^x\tilde{\theta}_i^y \\
+H_{\mathrm{MF}}(\{u\})& =-\frac{i}{4}\sum_{\langle ij\rangle_a}J_a u_{ij}^a\tilde{\theta}_i^a\tilde{\theta}_j^a-iD_z\sum_i\theta_i^x\theta_i^y \\
 &+\sum_{\langle ij\rangle_a}\frac{iJ_au_{ij}^a}4\left\{\frac{\epsilon_{opq}\epsilon_{rst}}4\langle\theta_i^o\theta_i^p\theta_j^r\theta_j^s\rangle\theta_i^q\theta_j^t\right. \\
 &+\frac{\epsilon_{lmn}}2\left(\theta_i^m\theta_i^n\langle\theta_i^l\theta_j^x\theta_j^y\theta_j^z\rangle-\theta_j^m\theta_j^n\langle\theta_j^l\theta_i^x\theta_i^y\theta_i^z\rangle\right) \\
 &\left.+\frac{\epsilon_{u\nu w}}2\left[\left(Q_i^{u\nu}\theta_i^w\tilde{\theta}_j^a-\Delta_{ij}^{w\tilde{a}}\theta_i^u\theta_i^\nu+iQ_i^{u\nu}\Delta_{ij}^{w\tilde{a}}\right)-(i\leftrightarrow j)\right]\right\}
@@ -174,7 +176,7 @@ $$\langle\theta_i^l\theta_j^x\theta_j^y\theta_j^z\rangle=\Delta_{ij}^{lx}Q_j^{yz
 Then we will get:
 
 $$\begin{aligned}
-H_{\mathrm{MF}}(\{u\})& =-\frac{i}{4}\sum_{\langle ij\rangle_a}J_a u_{ij}^a\tilde{\theta}_i^a\tilde{\theta}_j^a-iD_z\sum_i\theta_i^x\tilde{\theta}_i^y \\
+H_{\mathrm{MF}}(\{u\})& =-\frac{i}{4}\sum_{\langle ij\rangle_a}J_a u_{ij}^a\tilde{\theta}_i^a\tilde{\theta}_j^a-iD_z\sum_i\theta_i^x\theta_i^y \\
 &+\sum_{\langle ij\rangle_a}\frac{iJ_au_{ij}^a}4\left\{\frac{\epsilon_{opq}\epsilon_{rst}}4(-Q_i^{op}Q_j^{rs}+\Delta_{ij}^{or}\Delta_{ij}^{ps}-\Delta_{ij}^{os}\Delta_{ij}^{pr})\theta_i^q\theta_j^t\right. \\
 &+\frac{\epsilon_{lmn}}2\left(\theta_i^m\theta_i^n(\Delta_{ij}^{lx}Q_j^{yz}+\Delta_{ij}^{ly}Q_j^{zx}+\Delta_{ij}^{lz}Q_j^{xy})-(i\leftrightarrow j)\right) \\
 &\left.+\frac{\epsilon_{u\nu w}}2\left[\left(Q_i^{u\nu}\theta_i^w\tilde{\theta}_j^a-\Delta_{ij}^{w\tilde{a}}\theta_i^u\theta_i^\nu+iQ_i^{u\nu}\Delta_{ij}^{w\tilde{a}}\right)-(i\leftrightarrow j)\right]\right\}
@@ -201,20 +203,7 @@ H_{\mathrm{MF}}(\{u\})& =\frac{i}{4}\sum_{\langle ij\rangle_a}\left\{-\tilde{\th
 \frac{\epsilon_{opq}\epsilon_{rst}}4(\Delta_{ij}^{or}\Delta_{ij}^{ps}-\Delta_{ij}^{os}\Delta_{ij}^{pr})\theta_i^q\theta_j^t -\frac{\epsilon_{u\nu w}}2\left[\Delta_{ij}^{w\tilde{a}}\theta_i^u\theta_i^\nu-(i\leftrightarrow j)\right]\right\}
 \end{aligned}$$
 
-We can always set $j=i+\vec{a}$
-
-$$\begin{aligned}
-H_{\mathrm{MF}}=\frac{i}{8}\sum_aH^a_{\mathrm{MF}}=\frac{i}{8}\sum_{i,a}\left\{-\tilde{\theta}_i^a\tilde{\theta}_j^a +
-\frac{\epsilon_{opq}\epsilon_{rst}}4(\Delta_{a}^{or}\Delta_{a}^{ps}-\Delta_{a}^{os}\Delta_{a}^{pr})\theta_i^q\theta_{i+a}^t -\frac{\epsilon_{u\nu w}}2\left[\Delta_{a}^{\tilde{a}w}\theta_i^u\theta_i^\nu+\Delta_{a}^{w\tilde{a}}\theta_{i+a}^u\theta_{i+a}^\nu\right]\right\}
-\end{aligned}$$
-
-Shift the $i$ in the last term
-
-$$\begin{aligned}
-H_{\mathrm{MF}}=\frac{i}{8}\sum_aH^a_{\mathrm{MF}}=\frac{i}{8}\sum_{i,a}\left\{-\tilde{\theta}_i^a\tilde{\theta}_j^a +
-\frac{\epsilon_{opq}\epsilon_{rst}}4(\Delta_{a}^{or}\Delta_{a}^{ps}-\Delta_{a}^{os}\Delta_{a}^{pr})\theta_i^q\theta_{i+a}^t -\frac{\epsilon_{u\nu w}}2\left(\Delta_{a}^{\tilde{a}w}+\Delta_{a}^{w\tilde{a}} \right)\theta_i^u\theta_i^\nu\right\}
-\end{aligned}$$
-
+It is time to consider Fourier transformation.
 
 
 ## Mode Structure

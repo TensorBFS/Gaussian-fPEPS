@@ -59,8 +59,8 @@ def run(Lx, Ly, Nv, kernel_names, kernel_params, max_iterations=1000, seed=42, s
         with h5py.File(loadfile, 'r') as f:
             logging.info(f'Try to initialize T from {loadfile}')
             T = f["T"][:]
-    except:
-        logging.info(f"Load Failed! No {loadfile} switch to random initialize!")
+    except FileNotFoundError:
+        logging.info(f"Load Failed! File {loadfile} not found. Switching to random initialization.")
         T = None
 
     # Create GfPEPS instance
