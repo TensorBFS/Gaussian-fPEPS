@@ -1,29 +1,40 @@
 # Gaussian-fPEPS
 
-Translate the projected BCS state to the fermionic projected entangled pair state(fPEPS).
+Gaussian Fermionic Tensor Network Toolkit
 
-# About
+## 快速开始
 
-Demo code for the paper [Projected d-wave superconducting state: a fermionic projected entangled pair state study](https://arxiv.org/abs/2208.04566).
+```bash
+# 安装依赖
+pip install -r requirements.txt
 
+# 运行（默认d波配对）
+python gfpeps_app.py
 
-# Example
-
-- Using [Pluto](https://github.com/fonsp/Pluto.jl) Notebook and open example.jl
-- An alternative implementation of "translation" is `translate.py`
-
-# Install
-
-Dependencies are maintained via `hatch`. Run codes with
-```
-  hatch run python gfpeps_app.py
-  hatch run python translate.py
+# 运行不同配对类型
+python gfpeps_app.py --config-name=s_wave      # s波配对
+python gfpeps_app.py --config-name=p_ip_wave   # p+ip波配对
+python gfpeps_app.py --config-name=d_wave      # d波配对
 ```
 
-## Python dependencies:
+## 支持的配对类型
 
-[JAX](https://github.com/google/jax), [PyManopt](https://pymanopt.org/) and [h5py](https://docs.h5py.org/en/stable/) are required to run gfpeps/main.py.
+- **d_wave**: d波配对（高Tc铜氧化物超导体）
+- **s_wave**: s波配对（常规超导体）
+- **p_ip_wave**: p+ip波配对（拓扑超导体）
 
-## Julia dependencies:
+## 依赖
 
-[Pluto](https://github.com/fonsp/Pluto.jl) is needed to open the example notebook to open example.jl.
+- Python >= 3.8
+- numpy
+- pymanopt==2.0.0
+- h5py
+- bitarray
+- hydra-core
+- jax==0.4.26
+
+## 配置
+
+- `backend: gpu` - 使用GPU加速（推荐）
+- `backend: cpu` - 使用CPU（兼容性好）
+- `pairing_type` - 配对类型选择

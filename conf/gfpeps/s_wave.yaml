@@ -8,21 +8,21 @@ lattice:
 
 hamiltonian:
   ht: 1.0 # Hoping amplitude
-  DeltaX: 0.0 # pairing amplitude in x-direction
-  DeltaY: 0.0 # pairing amplitude in y-direction
+  DeltaX: 0.5 # s-wave pairing amplitude (constant)
+  DeltaY: 0.0 # not used for s-wave
   delta: 0.0 # desity of holes
   Mu: 0.0 # chemical potential
   solve_mu_from_delta: false # whether to solve chemical potential from hole density
-  pairing_type: "d_wave" # pairing type: "d_wave", "s_wave", "p_ip_wave"
+  pairing_type: "s_wave" # s-wave pairing
 
 file:
-  LoadFile: "./data/default.h5" # Load initial T from this file, if it exists
+  LoadFile: "./data/s_wave.h5" # Load initial T from this file, if it exists
   # LoadFile: ""
-  WriteFile: "./data/default.h5" # Write information about final Gaussian fPEPS to this file
+  WriteFile: "./data/s_wave.h5" # Write information about final Gaussian fPEPS to this file
   SaveEachSteps: True
 
 optimizer:
   MaxIter: 100
   gtol: 1E-7 # gtol for optimizer
 
-backend: gpu
+backend: gpu 

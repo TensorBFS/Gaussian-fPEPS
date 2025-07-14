@@ -1,0 +1,6 @@
+numpy
+pymanopt==2.0.0
+h5py
+bitarray
+hydra-core
+jax==0.4.26 

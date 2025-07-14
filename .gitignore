@@ -10,3 +10,4 @@ data/**
 __pycache__
 dist
 outputs
+nohup.out
