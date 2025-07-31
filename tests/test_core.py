@@ -1,26 +1,25 @@
 import pytest
 import jax
 import jax.numpy as jnp
-from jax.scipy.linalg import block_diag
-from src.gfpeps.core.Gin import batched_k, batched_Gin
-from src.gfpeps.core.correlator import make_correlator
-from src.gfpeps.core.loss import make_loss
+from kitaev import (
+    batched_k, batched_Gin, make_correlator, make_loss, 
+    kitaev_kernel, KitaevfPEPS, optimize
+)
 
 jax.config.update("jax_enable_x64", True)
 
-@pytest.fixture(params=[50])
+# Fixed parameters for Kitaev model
+NF = 1  # Always 1 for Kitaev spin-1/2
+
+@pytest.fixture(params=[25, 50])
 def Lx(request):
     return request.param
 
-@pytest.fixture(params=[50])
+@pytest.fixture(params=[25, 50])
 def Ly(request):
     return request.param
 
-@pytest.fixture(params=[2, 3])
-def Nf(request):
-    return request.param
-
-@pytest.fixture(params=[2, 4])
+@pytest.fixture(params=[1, 2])
 def Nv(request):
     return request.param
 
@@ -29,16 +28,17 @@ def rng_key():
     return jnp.array([0, 0], dtype=jnp.uint32)
 
 def test_batched_k(Lx, Ly):
-    # Test with parameterized grid size
+    """Test momentum space grid generation."""
     k_points = batched_k(Lx, Ly)
     
     # Check shape
     assert k_points.shape == (Lx * Ly, 2)
     
-    # Check values are in correct range [-π, π]
+    # Check values are in correct range
     assert jnp.all(jnp.abs(k_points) <= 2*jnp.pi)
 
 def test_batched_Gin(Lx, Ly, Nv):
+    """Test virtual bond matrix generation."""
     Gin = batched_Gin(Lx, Ly, Nv)
     
     # Check shape
@@ -48,57 +48,110 @@ def test_batched_Gin(Lx, Ly, Nv):
     for g in Gin:
         # Check anti-hermiticity
         assert jnp.allclose(g, -jnp.conjugate(g.T))
-        # check trace is zero
+        # Check trace is zero
         assert jnp.allclose(jnp.trace(g), 0)
 
-def test_make_correlator(Lx, Ly, Nf, Nv, rng_key):
-    correlator = make_correlator(Lx=Lx, Ly=Ly, Nf=Nf, Nv=Nv)
+def test_kitaev_kernel():
+    """Test Kitaev energy kernel."""
+    k = jnp.array([0.5, 0.3])
+    h_k = kitaev_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0)
     
-    # Create a random tensor for testing
-    key1, key2 = jax.random.split(rng_key)
+    # Check shape (2x2 for Kitaev)
+    assert h_k.shape == (2, 2)
+    
+    # Check antisymmetry
+    assert jnp.allclose(h_k, -h_k.T)
+    
+    # Check trace is zero
+    assert jnp.allclose(jnp.trace(h_k), 0)
 
-    # Create a random unitary matrix T:
-    T = jnp.array(jax.random.normal(key=key1, shape=(2*Nf + 8*Nv, 2*Nf + 8*Nv)))
+def test_make_correlator(Lx, Ly, Nv, rng_key):
+    """Test correlator function creation."""
+    correlator = make_correlator(Lx=Lx, Ly=Ly, Nv=Nv)
+    
+    # Create random orthogonal matrix T
+    key1, key2 = jax.random.split(rng_key)
+    dim = 2 * NF + 8 * Nv  # 2 + 8*Nv for Kitaev
+    T = jnp.array(jax.random.normal(key=key1, shape=(dim, dim)))
     U, S, V = jnp.linalg.svd(T)
     T = U @ V
     
     # Test correlator output
     G = correlator(T)
     
-    # Check shape
-    assert G.shape == (Lx*Ly, 2*Nf, 2*Nf)
+    # Check shape (physical space is 2*Nf = 2 for Kitaev)
+    assert G.shape == (Lx*Ly, 2*NF, 2*NF)
     
     # Check matrix properties
     for g in G:
         # Check anti-hermiticity
         assert jnp.allclose(g, -jnp.conjugate(g.T))
-        # check trace is zero
+        # Check trace is zero
         assert jnp.allclose(jnp.trace(g), 0)
 
-def test_make_loss(Lx, Ly, Nf, Nv, rng_key):
-    # Define a simple test kernel function
-    def test_kernel(k, coupling=1.0):
-        # the return matrix of a kernel function should be 2*Nf x 2*Nf
-        return coupling * jnp.ones((2*Nf, 2*Nf))
+def test_make_loss(Lx, Ly, Nv, rng_key):
+    """Test loss function creation."""
+    loss_fn = make_loss(Lx=Lx, Ly=Ly, Nv=Nv, Jx=1.0, Jy=1.0, Jz=1.0)
     
-    loss_fn = make_loss(test_kernel, Lx=Lx, Ly=Ly, Nf=Nf, Nv=Nv, coupling=1.0)
-    
-    # Create a random tensor for testing
+    # Create random orthogonal matrix T
     key1, key2 = jax.random.split(rng_key)
-
-    # Create a random unitary matrix T:
-    T = jnp.array(jax.random.normal(key=key1, shape=(2*Nf + 8*Nv, 2*Nf + 8*Nv)))
+    dim = 2 * NF + 8 * Nv
+    T = jnp.array(jax.random.normal(key=key1, shape=(dim, dim)))
     U, S, V = jnp.linalg.svd(T)
     T = U @ V
     
-    # Test loss function output
-    loss = loss_fn(T)
+    # Test loss function
+    energy = loss_fn(T)
     
-    # Check if output is real
-    print(loss)
-    assert jnp.issubdtype(loss.dtype, jnp.floating)
+    # Check if output is real scalar
+    assert jnp.issubdtype(energy.dtype, jnp.floating)
+    assert energy.shape == ()
     
-    # Check if loss changes with different coupling
-    loss_fn2 = make_loss(test_kernel, Lx=Lx, Ly=Ly, Nf=Nf, Nv=Nv, coupling=2.0)
-    loss2 = loss_fn2(T)
-    assert loss != loss2  # Loss should change with different coupling
+    # Test parameter dependence
+    loss_fn2 = make_loss(Lx=Lx, Ly=Ly, Nv=Nv, Jx=2.0, Jy=1.0, Jz=1.0)
+    energy2 = loss_fn2(T)
+    assert energy != energy2  # Energy should change with different couplings
+
+def test_KitaevfPEPS():
+    """Test KitaevfPEPS class."""
+    kitaev = KitaevfPEPS(Lx=10, Ly=10, Nv=1, Jx=1.0, Jy=1.0, Jz=1.0)
+    
+    # Check initialization
+    assert kitaev.Lx == 10
+    assert kitaev.Ly == 10
+    assert kitaev.Nv == 1
+    assert kitaev.T is not None
+    assert kitaev.loss is not None
+    
+    # Check T matrix properties
+    dim = 2 + 8 * 1  # 2 + 8*Nv for Kitaev with Nv=1
+    assert kitaev.T.shape == (dim, dim)
+    
+    # Check orthogonality
+    assert jnp.allclose(kitaev.T @ kitaev.T.T, jnp.eye(dim), rtol=1e-10)
+    
+    # Check energy computation
+    energy = kitaev.energy()
+    assert jnp.issubdtype(energy.dtype, jnp.floating)
+
+def test_optimization_small():
+    """Test optimization on small system."""
+    kitaev = KitaevfPEPS(Lx=5, Ly=5, Nv=1, Jx=1.0, Jy=1.0, Jz=1.0)
+    
+    initial_energy = kitaev.energy()
+    
+    # Run short optimization
+    optimized_kitaev, result = optimize(kitaev, max_iterations=5, verbosity=0)
+    
+    final_energy = optimized_kitaev.energy()
+    
+    # Energy should decrease (or at least not increase significantly)
+    assert final_energy <= initial_energy + 1e-10
+    
+    # Check that T remains orthogonal
+    dim = optimized_kitaev.T.shape[0]
+    assert jnp.allclose(
+        optimized_kitaev.T @ optimized_kitaev.T.T, 
+        jnp.eye(dim), 
+        rtol=1e-10
+    )
