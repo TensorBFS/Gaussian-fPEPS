@@ -1,5 +1,5 @@
 params:
-  Nv: 2 # Number of virtual fermions on each bond
+  Nv: 3 # Number of virtual fermions on each bond
   seed: 45 # Random seed
 
 lattice:
@@ -8,8 +8,8 @@ lattice:
 
 hamiltonian:
   ht: 1.0 # Hoping amplitude
-  DeltaX: 0.0 # d-wave pairing amplitude in x-direction
-  DeltaY: 0.0 # d-wave pairing amplitude in y-direction
+  DeltaX: 0.5 # d-wave pairing amplitude in x-direction
+  DeltaY: 0.5 # d-wave pairing amplitude in y-direction
   delta: 0.0 # desity of holes
   Mu: 0.0 # chemical potential
   solve_mu_from_delta: false # whether to solve chemical potential from hole density
@@ -19,10 +19,10 @@ file:
   # LoadFile: "./data/d_wave.h5" # Load initial T from this file, if it exists
   LoadFile: ""
   WriteFile: "./data/d_wave.h5" # Write information about final Gaussian fPEPS to this file
-  SaveEachSteps: True
+  SaveEachSteps: False
 
 optimizer:
-  MaxIter: 100
+  MaxIter: 5000
   gtol: 1E-7 # gtol for optimizer
 
 backend: gpu 

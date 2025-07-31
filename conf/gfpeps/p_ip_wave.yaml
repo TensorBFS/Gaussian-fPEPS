@@ -19,10 +19,10 @@ file:
   # LoadFile: "./data/p_ip_wave.h5" # Load initial T from this file, if it exists
   LoadFile: ""
   WriteFile: "./data/p_ip_wave.h5" # Write information about final Gaussian fPEPS to this file
-  SaveEachSteps: True
+  SaveEachSteps: False
 
 optimizer:
-  MaxIter: 100
+  MaxIter: 5000
   gtol: 1E-7 # gtol for optimizer
 
 backend: gpu 

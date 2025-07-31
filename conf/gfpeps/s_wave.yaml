@@ -19,7 +19,7 @@ file:
   LoadFile: "./data/s_wave.h5" # Load initial T from this file, if it exists
   # LoadFile: ""
   WriteFile: "./data/s_wave.h5" # Write information about final Gaussian fPEPS to this file
-  SaveEachSteps: True
+  SaveEachSteps: False
 
 optimizer:
   MaxIter: 100

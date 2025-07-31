@@ -1,5 +1,5 @@
 params:
-  Nv: 2 # Number of virtual fermions on each bond
+  Nv: 3 # Number of virtual fermions on each bond
   seed: 44 # Random seed
 
 lattice:
@@ -19,10 +19,10 @@ file:
   LoadFile: "./data/default.h5" # Load initial T from this file, if it exists
   # LoadFile: ""
   WriteFile: "./data/default.h5" # Write information about final Gaussian fPEPS to this file
-  SaveEachSteps: True
+  SaveEachSteps: False
 
 optimizer:
-  MaxIter: 100
+  MaxIter: 5000
   gtol: 1E-7 # gtol for optimizer
 
 backend: gpu
