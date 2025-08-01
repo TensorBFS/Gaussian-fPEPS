@@ -103,10 +103,9 @@ def compute_band_dispersion(correlator, k_points, Jx=1.0, Jy=1.0, Jz=1.0):
     def compute_energy_for_k(corr_k, k):
         # Get the 2x2 Hamiltonian matrix for this k-point
         H_k = kitaev_kernel(k, Jx, Jy, Jz)
-        # Compute energy: E = mean(real(dot(correlator, Hamiltonian)))
-        # This matches the implementation in kitaev.py
-        dot_result = jnp.dot(corr_k, H_k)
-        energy = jnp.mean(jnp.real(dot_result))
+        # FIXED: Use sum() instead of mean() to match energy expectation formula
+        # ⟨H⟩ = Σᵢⱼ Γᵢⱼ(k) hᵢⱼ(k), not the average
+        energy = jnp.mean(jnp.real(corr_k * H_k)) * 2.0
         # Ensure energy is real and return [E, -E] for the two bands
         energy_real = jnp.real(energy)
         return jnp.array([energy_real, -energy_real])
@@ -712,7 +711,8 @@ def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, s
             plot_diagonal_band_dispersion(
                 eigenvalues=np.array(eigenvalues),
                 k_points=np.array(k_points),
-                save_path=seed_dir / "diagonal_band_dispersion.png"
+                save_path=seed_dir / "diagonal_band_dispersion.png",
+                s = 1,
             )
             
             # Dirac point scaling analysis with known Dirac point location

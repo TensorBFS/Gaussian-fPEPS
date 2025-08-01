@@ -463,7 +463,7 @@ def plot_gap_analysis(eigenvalues, k_points, save_path=None):
     
     return fig, ax
 
-def plot_diagonal_band_dispersion(eigenvalues, k_points, save_path=None):
+def plot_diagonal_band_dispersion(eigenvalues, k_points, save_path=None, s=1):
     """
     Plot band dispersion along diagonal line from (π,-π) to (-π,π).
     
@@ -522,10 +522,10 @@ def plot_diagonal_band_dispersion(eigenvalues, k_points, save_path=None):
                    label=f'fPEPS Band {band+1}')
     
     # Plot exact solutions (both bands)
-    ax.plot(t, exact_energies_positive, color='red', linewidth=3, linestyle='-', 
-           alpha=0.8, label='Exact: +|J(k)|/4')
-    ax.plot(t, exact_energies_negative, color='red', linewidth=3, linestyle='--', 
-           alpha=0.8, label='Exact: -|J(k)|/4')
+    ax.plot(t, exact_energies_positive, color='red', linewidth=s, linestyle='-', 
+           alpha=0.8, label='Exact: +|J(k)|/4', markersize=s)
+    ax.plot(t, exact_energies_negative, color='red', linewidth=s, linestyle='--', 
+           alpha=0.8, label='Exact: -|J(k)|/4', markersize=s)
     
     # Mark only meaningful points: Γ and Dirac points
     meaningful_points = {

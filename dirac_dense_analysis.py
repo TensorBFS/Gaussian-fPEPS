@@ -104,9 +104,9 @@ def compute_band_dispersion(correlator, k_points, Jx=1.0, Jy=1.0, Jz=1.0):
     def compute_energy_for_k(corr_k, k):
         # Get the 2x2 Hamiltonian matrix for this k-point
         H_k = kitaev_kernel(k, Jx, Jy, Jz)
-        # Use expectation value calculation (following kitaev.py exactly)
-        dot_result = jnp.dot(corr_k, H_k)
-        energy = jnp.mean(jnp.real(dot_result))
+        # FIXED: Use element-wise multiplication and sum instead of dot product and mean
+        # ⟨H⟩ = Σᵢⱼ Γᵢⱼ(k) hᵢⱼ(k), not dot product
+        energy = jnp.sum(jnp.real(corr_k * H_k))
         return jnp.array([energy, -energy])
     
     # Vectorized computation over all k-points

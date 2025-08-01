@@ -95,7 +95,7 @@ def make_loss(Lx, Ly, Nv, Jx=1.0, Jy=1.0, Jz=1.0):
     def loss_fn(T):
         """Compute energy expectation: ⟨H⟩ = Tr(Γ * h)"""
         Gout = correlator(T)
-        return jnp.mean(jnp.real(Gout * batch_h))
+        return jnp.mean(jnp.real(Gout * batch_h)) * 2.0 # mean [0,1] and [1,0]
 
     return loss_fn
 
