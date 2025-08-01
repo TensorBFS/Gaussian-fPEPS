@@ -36,8 +36,8 @@ def kitaev_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0):
     kx, ky = k[0], k[1]
     # J(k) = Jz - Jx*exp(ikx) - Jy*exp(iky) 
     Jk = Jz - Jx * jnp.exp(1j * kx) - Jy * jnp.exp(1j * ky)
-    # Antisymmetric matrix
-    return jnp.array([[0, Jk], [-Jk, 0]]) / 4.0
+    # Anti-Hermitian matrix
+    return jnp.array([[0, Jk], [-Jk, 0]]) / 4.0 # sigma_a -> S_a
 
 # ============================================================================
 # Momentum Space and Virtual Bonds
@@ -95,7 +95,7 @@ def make_loss(Lx, Ly, Nv, Jx=1.0, Jy=1.0, Jz=1.0):
     def loss_fn(T):
         """Compute energy expectation: ⟨H⟩ = Tr(Γ * h)"""
         Gout = correlator(T)
-        return jnp.mean(jnp.real(vmap(jnp.dot)(Gout, batch_h)))
+        return jnp.mean(jnp.real(Gout * batch_h))
 
     return loss_fn
 

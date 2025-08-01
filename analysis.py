@@ -154,6 +154,282 @@ def compute_real_space_correlations(correlator, k_points, Lx, Ly, max_distance=1
 # Plotting Functions
 # ============================================================================
 
+def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, correlator, Lx, Ly,
+                                                       save_path=None, band_index=0, show_vector_field=True):
+    """
+    Plot 2D band structure with correlator phase vector field (like exact_dispersion.py).
+    
+    Args:
+        eigenvalues: Band energies, shape (n_k, n_bands)
+        k_points: k-point grid, shape (n_k, 2)
+        correlator: k-space correlator matrices, shape (n_k, 2, 2)
+        Lx, Ly: Grid dimensions
+        save_path: Path to save figure
+        band_index: Which band to plot
+        show_vector_field: Whether to show correlator[0,1] phase vector field
+    
+    Returns:
+        fig, ax: Matplotlib figure and axes
+    """
+    # Create figure
+    fig, ax = plt.subplots(figsize=(12, 10))
+    
+    # Reshape data for 2D plotting
+    n_k = int(np.sqrt(len(k_points)))
+    if n_k * n_k == len(k_points):
+        kx = k_points[:, 0].reshape(n_k, n_k)
+        ky = k_points[:, 1].reshape(n_k, n_k)
+        energies = eigenvalues[:, band_index].reshape(n_k, n_k)
+        
+        # Create contour plot
+        levels = np.linspace(np.min(energies), np.max(energies), 30)
+        contour = ax.contourf(kx, ky, energies, levels=levels, 
+                             cmap='RdBu_r', alpha=0.8)
+        contour_lines = ax.contour(kx, ky, energies, levels=levels, 
+                                  colors='black', linewidths=0.5, alpha=0.6)
+        
+        # Add colorbar for energy
+        cbar = fig.colorbar(contour, ax=ax, shrink=0.8)
+        cbar.set_label(f'Band {band_index + 1} Energy', fontsize=12)
+        
+    else:
+        # Fallback to scatter plot for irregular grid
+        scatter = ax.scatter(k_points[:, 0], k_points[:, 1], 
+                           c=eigenvalues[:, band_index], cmap='RdBu_r', 
+                           s=20, alpha=0.7)
+        fig.colorbar(scatter, ax=ax, shrink=0.8, 
+                    label=f'Band {band_index + 1} Energy')
+    
+    # Add vector field if requested
+    if show_vector_field:
+        # Extract correlator[0,1] phase
+        correlator_01 = correlator[:, 0, 1]
+        phases = np.angle(correlator_01)
+        phases_2d = phases.reshape(n_k, n_k)  # Use n_k instead of Lx, Ly
+        
+        # Generate vector field from phase gradient (like exact_dispersion.py)
+        skip_factor = 3
+        skip = skip_factor
+        X = kx[::skip, ::skip]
+        Y = ky[::skip, ::skip]
+        
+        # Compute gradient of phase for vector field
+        grad_phase_x = np.gradient(phases_2d, axis=1)[::skip, ::skip]
+        grad_phase_y = np.gradient(phases_2d, axis=0)[::skip, ::skip]
+        
+        # Normalize vectors
+        norm = np.sqrt(grad_phase_x**2 + grad_phase_y**2)
+        U = grad_phase_x / (norm + 1e-10)
+        V = grad_phase_y / (norm + 1e-10)
+        
+        # Plot vector field (same as exact_dispersion.py)
+        quiver = ax.quiver(X, Y, U, V, color='black', alpha=0.8, 
+                          scale=50, width=0.002, headwidth=2, headlength=3)
+        
+        # Add legend for vector field
+        ax.quiverkey(quiver, 0.9, 0.95, 1, r'$\nabla \arg \Gamma_{01}(k)$', 
+                    labelpos='E', coordinates='figure', fontproperties={'size': 10})
+    
+    # Mark high-symmetry points
+    high_sym_points = {
+        'Γ': (0.0, 0.0),
+        'M': (np.pi, 0.0),
+        'K': (4*np.pi/3, 0.0),
+        'Y': (0.0, 2*np.pi/np.sqrt(3))
+    }
+    
+    for name, point in high_sym_points.items():
+        ax.plot(point[0], point[1], 's', markersize=6, markerfacecolor='white',
+               markeredgewidth=1.5, markeredgecolor='blue')
+        ax.annotate(name, point, xytext=(5, 5), 
+                   textcoords='offset points', fontsize=10)
+    
+    # Mark known Dirac points
+    known_dirac_points = [
+        (np.pi/3, -np.pi/3),           # Main Dirac point
+        (-np.pi/3, np.pi/3),           # Equivalent Dirac point
+    ]
+    
+    for i, (kx, ky) in enumerate(known_dirac_points):
+        ax.plot(kx, ky, 'ko', markersize=10, markerfacecolor='yellow',
+               markeredgewidth=2, markeredgecolor='black')
+        if i == 0:  # Only label the main one
+            ax.annotate('Dirac', (kx, ky), xytext=(10, 10), 
+                       textcoords='offset points', fontsize=12, fontweight='bold',
+                       bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
+    
+    # Formatting
+    ax.set_xlabel(r'$k_x$', fontsize=14)
+    ax.set_ylabel(r'$k_y$', fontsize=14)
+    
+    title = f'2D Band Structure with Correlator Phase Vector Field\nBand {band_index + 1}'
+    if show_vector_field:
+        title += " (Γ[0,1] Phase Vector Field)"
+    ax.set_title(title, fontsize=16, pad=15)
+    
+    ax.set_aspect('equal')
+    ax.grid(True, alpha=0.3)
+    
+    # Set axis limits
+    ax.set_xlim(-np.pi, np.pi)
+    ax.set_ylim(-np.pi, np.pi)
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"🎨 2D band structure with correlator vector field saved: {Path(save_path).name}")
+    
+    return fig, ax
+
+def plot_band_dispersion_with_vector_field(eigenvalues, k_points, correlator, Lx, Ly, 
+                                          save_path=None, show_vector_field=True, vector_skip_factor=3):
+    """Plot high-quality band dispersion with optional correlator phase vector field."""
+    try:
+        from plot.dispersion import plot_kitaev_bands
+        
+        # First plot the band dispersion
+        fig, ax = plot_kitaev_bands(
+            eigenvalues=np.array(eigenvalues), 
+            k_points=np.array(k_points),
+            save_path=None  # Don't save yet, we'll add vector field
+        )
+        
+        # Add vector field if requested
+        if show_vector_field:
+            # Compute vector field for correlator[0,1] phase
+            X, Y, U, V, phases_2d = compute_correlator_phase_vector_field(
+                correlator, k_points, Lx, Ly, vector_skip_factor
+            )
+            
+            # Plot vector field on top of band dispersion
+            quiver = ax.quiver(X, Y, U, V, color='black', alpha=0.8, 
+                              scale=50, width=0.002, headwidth=2, headlength=3)
+            
+            # Add legend for vector field
+            ax.quiverkey(quiver, 0.9, 0.95, 1, r'$\nabla \arg \Gamma_{01}(k)$', 
+                        labelpos='E', coordinates='figure', fontproperties={'size': 10})
+            
+            # Update title to indicate vector field
+            current_title = ax.get_title()
+            ax.set_title(current_title + " with Γ[0,1] Phase Vector Field", fontsize=16, pad=15)
+        
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Band dispersion with vector field saved: {Path(save_path).name}")
+        
+        return fig, ax
+        
+    except ImportError:
+        # Fallback to basic plotting if plot module not available
+        print("⚠️  High-quality plot module not available, using basic plotting")
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        # For simplicity, plot along kx direction (ky=0)
+        Lx_plot = int(jnp.sqrt(len(k_points)))
+        
+        # Extract kx=0 to π line (ky=0)
+        kx_line_indices = jnp.arange(0, Lx_plot)
+        kx_values = k_points[kx_line_indices, 0]
+        eigenvals_line = eigenvalues[kx_line_indices]
+        
+        # Plot all bands
+        for band in range(eigenvals_line.shape[1]):
+            ax.plot(kx_values, eigenvals_line[:, band], 'o-', markersize=3, linewidth=1.5, 
+                    label=f'Band {band+1}')
+        
+        # Add vector field if requested
+        if show_vector_field:
+            # Compute vector field for correlator[0,1] phase
+            X, Y, U, V, phases_2d = compute_correlator_phase_vector_field(
+                correlator, k_points, Lx, Ly, vector_skip_factor
+            )
+            
+            # For 1D plot, we'll show the phase as a color overlay
+            correlator_01 = correlator[:, 0, 1]
+            phases_1d = jnp.angle(correlator_01)
+            
+            # Create a second y-axis for phase
+            ax2 = ax.twinx()
+            ax2.plot(kx_values, phases_1d[kx_line_indices], 'r--', alpha=0.7, 
+                     label=r'$\arg \Gamma_{01}(k)$')
+            ax2.set_ylabel(r'$\arg \Gamma_{01}(k)$ (radians)', color='red')
+            ax2.tick_params(axis='y', labelcolor='red')
+            ax2.legend(loc='upper right')
+        
+        ax.set_xlabel('kx')
+        ax.set_ylabel('Energy')
+        title = 'Band Dispersion (ky = 0)'
+        if show_vector_field:
+            title += " with Γ[0,1] Phase"
+        ax.set_title(title)
+        ax.legend(loc='upper left')
+        ax.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Band dispersion with vector field saved: {Path(save_path).name}")
+        
+        return fig, ax
+        
+    except ImportError:
+        # Fallback to basic plotting if plot module not available
+        print("⚠️  High-quality plot module not available, using basic plotting")
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        # For simplicity, plot along kx direction (ky=0)
+        Lx_plot = int(jnp.sqrt(len(k_points)))
+        
+        # Extract kx=0 to π line (ky=0)
+        kx_line_indices = jnp.arange(0, Lx_plot)
+        kx_values = k_points[kx_line_indices, 0]
+        eigenvals_line = eigenvalues[kx_line_indices]
+        
+        # Plot all bands
+        for band in range(eigenvals_line.shape[1]):
+            ax.plot(kx_values, eigenvals_line[:, band], 'o-', markersize=3, linewidth=1.5, 
+                    label=f'Band {band+1}')
+        
+        # Add vector field if requested
+        if show_vector_field:
+            # Compute vector field for correlator[0,1] phase
+            X, Y, U, V, phases_2d = compute_correlator_phase_vector_field(
+                correlator, k_points, Lx, Ly, vector_skip_factor
+            )
+            
+            # For 1D plot, we'll show the phase as a color overlay
+            correlator_01 = correlator[:, 0, 1]
+            phases_1d = jnp.angle(correlator_01)
+            
+            # Create a second y-axis for phase
+            ax2 = ax.twinx()
+            ax2.plot(kx_values, phases_1d[kx_line_indices], 'r--', alpha=0.7, 
+                     label=r'$\arg \Gamma_{01}(k)$')
+            ax2.set_ylabel(r'$\arg \Gamma_{01}(k)$ (radians)', color='red')
+            ax2.tick_params(axis='y', labelcolor='red')
+            ax2.legend(loc='upper right')
+        
+        ax.set_xlabel('kx')
+        ax.set_ylabel('Energy')
+        title = 'Band Dispersion (ky = 0)'
+        if show_vector_field:
+            title += " with Γ[0,1] Phase"
+        ax.set_title(title)
+        ax.legend(loc='upper left')
+        ax.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Band dispersion with vector field saved: {Path(save_path).name}")
+        
+        return fig, ax
+
 def plot_band_dispersion(eigenvalues, k_points, save_path=None):
     """Plot high-quality band dispersion using PRL-level plotting."""
     try:
@@ -289,7 +565,7 @@ def save_analysis_results(results, seed_dir, prefix="analysis"):
 # Main Analysis Pipeline
 # ============================================================================
 
-def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, save_plots=True, output_dir=None):
+def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, save_plots=True, output_dir=None, show_vector_field=True):
     """
     Complete analysis pipeline with separate k-space and real-space grid sizes.
     Args:
@@ -299,6 +575,7 @@ def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, s
         max_distance: maximum distance for G(r) calculation
         save_plots: whether to save plots
         output_dir: optional override for output directory (default: auto-detect seed dir)
+        show_vector_field: whether to show correlator phase vector field
     """
     print(f"🔬 Starting analysis of: {glocal_file}")
     # Load Glocal and metadata
@@ -365,7 +642,21 @@ def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, s
     if save_plots:
         print("🎨 Generating PRL-quality plots...")
         
-        # Generate high-quality band dispersion plot (removed - using diagonal plot instead)
+        # Generate band dispersion plot with optional vector field
+        if show_vector_field:
+            # Use new 2D band structure with vector field
+            plot_2d_band_structure_with_correlator_vector_field(
+                eigenvalues, k_points, correlator, Kx, Ky,
+                save_path=seed_dir / "band_dispersion_with_vector_field.png",
+                band_index=0, show_vector_field=True
+            )
+            
+
+        else:
+            plot_band_dispersion(
+                eigenvalues, k_points,
+                save_path=seed_dir / "band_dispersion.png"
+            )
         
         # Generate high-quality correlation plots for all components
         n_components = G_r.shape[2]
@@ -487,6 +778,8 @@ def parse_args():
                        help="Output directory for results (default: auto-detect seed directory)")
     parser.add_argument("--no_plots", action="store_true",
                        help="Skip generating plots")
+    parser.add_argument("--no_vector_field", action="store_true",
+                       help="Skip vector field in band dispersion plots")
     return parser.parse_args()
 
 def main():
@@ -500,7 +793,8 @@ def main():
         Ly=args.Ly,
         max_distance=args.max_distance,
         save_plots=not args.no_plots,
-        output_dir=args.output_dir
+        output_dir=args.output_dir,
+        show_vector_field=not args.no_vector_field
     )
     print(f"\n📈 Analysis Summary:")
     print(f"   Number of k-points: {len(results['k_points'])}")

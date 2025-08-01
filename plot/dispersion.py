@@ -497,13 +497,35 @@ def plot_diagonal_band_dispersion(eigenvalues, k_points, save_path=None):
             method='linear', fill_value=np.nan
         )
     
+    # Compute exact solution: ±|J(k)|/4 where J(k) = Jz - Jx*exp(ikx) - Jy*exp(iky)
+    # Using Jx=Jy=Jz=1.0 for isotropic Kitaev model
+    Jx, Jy, Jz = 1.0, 1.0, 1.0
+    exact_energies_positive = np.zeros(n_points)
+    exact_energies_negative = np.zeros(n_points)
+    for i in range(n_points):
+        kx = diagonal_kx[i]
+        ky = diagonal_ky[i]
+        # Compute J(k) = Jz - Jx*exp(ikx) - Jy*exp(iky)
+        Jk = Jz - Jx * np.exp(1j * kx) - Jy * np.exp(1j * ky)
+        # Eigenvalues are ±|J(k)|/4
+        Ek = np.abs(Jk) / 4.0
+        exact_energies_positive[i] = Ek
+        exact_energies_negative[i] = -Ek
+    
     # Plot bands with unified color scheme
     colors = ['#1f77b4', '#ff7f0e']  # Blue and orange
     for band in range(n_bands):
         valid_mask = ~np.isnan(interpolated_bands[:, band])
         if np.any(valid_mask):
             ax.plot(t[valid_mask], interpolated_bands[valid_mask, band], 
-                   color=colors[band], linewidth=2.5, alpha=0.9)
+                   color=colors[band], linewidth=2.5, alpha=0.9, 
+                   label=f'fPEPS Band {band+1}')
+    
+    # Plot exact solutions (both bands)
+    ax.plot(t, exact_energies_positive, color='red', linewidth=3, linestyle='-', 
+           alpha=0.8, label='Exact: +|J(k)|/4')
+    ax.plot(t, exact_energies_negative, color='red', linewidth=3, linestyle='--', 
+           alpha=0.8, label='Exact: -|J(k)|/4')
     
     # Mark only meaningful points: Γ and Dirac points
     meaningful_points = {
@@ -536,7 +558,7 @@ def plot_diagonal_band_dispersion(eigenvalues, k_points, save_path=None):
     # Professional formatting
     ax.set_xlabel('Momentum', fontsize=16)
     ax.set_ylabel('Energy', fontsize=16)
-    ax.set_title('Kitaev Band Dispersion', fontsize=18, pad=20)
+    ax.set_title('Kitaev Band Dispersion (with Exact Solution)', fontsize=18, pad=20)
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.8)
     ax.legend(fontsize=14, loc='upper right')
     

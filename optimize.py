@@ -7,6 +7,7 @@ Usage:
     python main.py --Jx 0.5 --Nv 3   # Override specific parameters
 """
 
+import jax
 import argparse
 from kitaev import run_kitaev_simulation, DEFAULT_CONFIG
 
@@ -40,6 +41,8 @@ def main():
     args = parse_args()
     config = vars(args)
     
+    print("Devices:", jax.devices())
+
     # Run simulation
     kitaev_system, result = run_kitaev_simulation(config)
     

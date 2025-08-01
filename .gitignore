@@ -14,3 +14,4 @@ outputs
 site
 **/.DS_Store
 results/
+nohup.out
