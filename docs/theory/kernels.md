@@ -45,7 +45,7 @@ The Majorana Hamiltonian in momentum space then takes the form:
 
 $$h_{\text{Kitaev}}^{(1/2)}(\mathbf{k}) = \begin{pmatrix} 
 0 & J(\mathbf{k}) \\ 
--J(\mathbf{k}) & 0
+-J(\mathbf{k})^* & 0
 \end{pmatrix}$$
 
 with:
@@ -67,7 +67,7 @@ def kitaev_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0):
     """
     kx, ky = k[0], k[1]
     Jk = Jz - Jx * jnp.exp(1j * kx) - Jy * jnp.exp(1j * ky)
-    return jnp.array([[0, Jk], [-Jk, 0]]) / 4.0
+    return jnp.array([[0, Jk], [-Jk.conj(), 0]]) / 4.0
 ```
 
 ### Energy Results

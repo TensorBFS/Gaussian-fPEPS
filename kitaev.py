@@ -37,7 +37,7 @@ def kitaev_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0):
     # J(k) = Jz - Jx*exp(ikx) - Jy*exp(iky) 
     Jk = Jz - Jx * jnp.exp(1j * kx) - Jy * jnp.exp(1j * ky)
     # Anti-Hermitian matrix
-    return jnp.array([[0, Jk], [-Jk, 0]]) / 4.0 # sigma_a -> S_a
+    return jnp.array([[0, Jk], [-Jk.conj(), 0]]) / 4.0 # sigma_a -> S_a
 
 # ============================================================================
 # Momentum Space and Virtual Bonds
@@ -112,13 +112,14 @@ class KitaevfPEPS:
     Jx: float = 1.0
     Jy: float = 1.0
     Jz: float = 1.0
+    seed: int = 42
     T: jnp.ndarray = None
     loss: callable = None
 
     def __post_init__(self):
         """Initialize random T matrix and loss function."""
         if self.T is None:
-            self.T = self._initialize_random_T(seed=42)
+            self.T = self._initialize_random_T(seed=self.seed)
         self.loss = make_loss(self.Lx, self.Ly, self.Nv, 
                              Jx=self.Jx, Jy=self.Jy, Jz=self.Jz)
 
@@ -239,7 +240,7 @@ def run_kitaev_simulation(config=None):
     logging.info(f"Initializing Kitaev system: {Lx}x{Ly}, Nv={Nv}")
     logging.info(f"Kitaev parameters: Jx={Jx}, Jy={Jy}, Jz={Jz}")
     
-    kitaev = KitaevfPEPS(Lx=Lx, Ly=Ly, Nv=Nv, Jx=Jx, Jy=Jy, Jz=Jz)
+    kitaev = KitaevfPEPS(Lx=Lx, Ly=Ly, Nv=Nv, Jx=Jx, Jy=Jy, Jz=Jz, seed=seed)
     
     initial_energy = kitaev.energy()
     logging.info(f"Initial energy: {initial_energy:.8f}")
@@ -288,7 +289,6 @@ def _save_simulation_results(kitaev_system, result, config):
     Glocal_matrix = np.array(Glocal)
     
     # Save matrices in seed directory
-    np.save(seed_dir / f"{filename}_T.npy", T_matrix)
     np.save(seed_dir / f"{filename}_Glocal.npy", Glocal_matrix)
     
     # Prepare metadata
@@ -304,7 +304,6 @@ def _save_simulation_results(kitaev_system, result, config):
         "Glocal_shape": Glocal_matrix.shape,
         "seed_directory": str(seed_dir),
         "files": {
-            "T_matrix": f"{filename}_T.npy",
             "Glocal_matrix": f"{filename}_Glocal.npy"
         }
     }
@@ -315,9 +314,8 @@ def _save_simulation_results(kitaev_system, result, config):
     
     logging.info(f"Results saved to seed directory:")
     logging.info(f"  Directory: {seed_dir}")
-    logging.info(f"  T matrix: {filename}_T.npy")
-    logging.info(f"  Glocal matrix: {filename}_Glocal.npy") 
-    logging.info(f"  Metadata: {filename}_meta.json")
+    logging.info(f"  Glocal matrix: {seed_dir}/{filename}_Glocal.npy") 
+    logging.info(f"  Metadata: {seed_dir}/{filename}_meta.json")
 
 # ============================================================================
 # Convenience Functions  
