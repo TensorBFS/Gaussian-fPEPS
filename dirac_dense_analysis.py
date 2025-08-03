@@ -48,6 +48,48 @@ def batched_Gin(Lx, Ly, Nv):
     
     return vmap(lambda k: _gamma_in(k, Nv), 0)(batched_k(Lx, Ly))
 
+def kitaev_kernel_for_phase(k, Jx=1.0, Jy=1.0, Jz=1.0):
+    """
+    Kitaev honeycomb spin-1/2 energy kernel for phase calculation.
+    Returns the J(k) complex value whose phase we want to plot.
+    
+    Args:
+        k: Momentum vector (kx, ky)
+        Jx, Jy, Jz: Kitaev coupling strengths
+        
+    Returns:
+        J(k) = Jz - Jx*exp(ikx) - Jy*exp(iky)
+    """
+    kx, ky = k[0], k[1]
+    Jk = Jz - Jx * jnp.exp(1j * kx) - Jy * jnp.exp(1j * ky)
+    return Jk
+
+def compute_Jk_phase_for_points(k_points, Jx=1.0, Jy=1.0, Jz=1.0):
+    """
+    Compute the phase of J(k) for given k-points.
+    
+    Args:
+        k_points: Array of k-points, shape (n_k, 2)
+        Jx, Jy, Jz: Kitaev coupling parameters
+    
+    Returns:
+        Jk_phases: Phase of J(k), shape (n_k,)
+        Jk_magnitudes: Magnitude of J(k), shape (n_k,)
+    """
+    def compute_single_Jk(k):
+        """Compute J(k) for a single k-point."""
+        Jk = kitaev_kernel_for_phase(k, Jx, Jy, Jz)
+        phase = jnp.angle(Jk)
+        magnitude = jnp.abs(Jk)
+        return jnp.array([phase, magnitude])
+    
+    # Vectorized computation over all k-points
+    Jk_data = vmap(compute_single_Jk)(k_points)
+    phases = Jk_data[:, 0]
+    magnitudes = Jk_data[:, 1]
+    
+    return phases, magnitudes
+
 # ============================================================================
 # Analysis Functions
 # ============================================================================
@@ -255,52 +297,104 @@ def analyze_dirac_scaling_dense(glocal_file, dirac_point=(np.pi/3, -np.pi/3),
         save_path = Path(save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Create 2D plot of dkx vs dky
-        fig_2d, ax_2d = plt.subplots(1, 1, figsize=(10, 8))
+        # Create 2D plot with two subplots: energy and phase
+        fig_2d, (ax_energy, ax_phase) = plt.subplots(1, 2, figsize=(16, 8))
         
         # Calculate dkx and dky relative to Dirac point
         dkx = dense_k_points[:, 0] - dirac_point[0]
         dky = dense_k_points[:, 1] - dirac_point[1]
         
-        # Use energy values for color mapping
+        # Plot 1: Energy distribution
         energy_values = np.abs(eigenvalues[:, 0])  # Use first band
         
         # Create scatter plot with energy as color
-        scatter = ax_2d.scatter(dkx, dky, c=energy_values, cmap='viridis', 
-                               s=30, alpha=0.8, edgecolors='black', linewidth=0.5)
+        scatter_energy = ax_energy.scatter(dkx, dky, c=energy_values, cmap='viridis', 
+                                          s=30, alpha=0.8, edgecolors='black', linewidth=0.5)
         
-        # Add colorbar
-        cbar = plt.colorbar(scatter, ax=ax_2d)
-        cbar.set_label(r'$|E(k)|$', fontsize=14)
+        # Add colorbar for energy
+        cbar_energy = plt.colorbar(scatter_energy, ax=ax_energy)
+        cbar_energy.set_label(r'$|E(k)|$', fontsize=14)
         
         # Add Dirac point marker
-        ax_2d.scatter(0, 0, c='red', s=100, marker='*', edgecolors='black', 
-                      linewidth=1, label='Dirac Point', zorder=5)
+        ax_energy.scatter(0, 0, c='red', s=100, marker='*', edgecolors='black', 
+                         linewidth=1, label='Dirac Point', zorder=5)
         
         # Add circle showing analysis radius
-        circle = plt.Circle((0, 0), radius, fill=False, color='red', 
-                           linestyle='--', linewidth=2, label=f'Analysis radius = {radius}')
-        ax_2d.add_patch(circle)
+        circle_energy = plt.Circle((0, 0), radius, fill=False, color='red', 
+                                  linestyle='--', linewidth=2, label=f'Analysis radius = {radius}')
+        ax_energy.add_patch(circle_energy)
         
-        # Set labels and title
-        ax_2d.set_xlabel(r'$\Delta k_x$', fontsize=14)
-        ax_2d.set_ylabel(r'$\Delta k_y$', fontsize=14)
-        ax_2d.set_title(f'2D Energy Distribution around Dirac Point\n({dirac_point[0]:.2f}, {dirac_point[1]:.2f})', 
-                        fontsize=14)
+        # Set labels and title for energy plot
+        ax_energy.set_xlabel(r'$\Delta k_x$', fontsize=14)
+        ax_energy.set_ylabel(r'$\Delta k_y$', fontsize=14)
+        ax_energy.set_title(f'Energy Distribution |E(k)|\nDirac Point: ({dirac_point[0]:.2f}, {dirac_point[1]:.2f})', 
+                           fontsize=14)
         
-        # Set equal aspect ratio and limits
-        ax_2d.set_aspect('equal')
-        ax_2d.set_xlim(-radius*1.1, radius*1.1)
-        ax_2d.set_ylim(-radius*1.1, radius*1.1)
+        # Set equal aspect ratio and limits for energy plot
+        ax_energy.set_aspect('equal')
+        ax_energy.set_xlim(-radius*1.1, radius*1.1)
+        ax_energy.set_ylim(-radius*1.1, radius*1.1)
+        ax_energy.grid(True, alpha=0.3)
+        ax_energy.legend(fontsize=12)
         
-        # Add grid
-        ax_2d.grid(True, alpha=0.3)
-        ax_2d.legend(fontsize=12)
+        # Plot 2: Correlator Gamma[0,1] Phase distribution using arrows
+        # Extract Gamma[0,1] from dense correlator
+        gamma_01 = dense_correlator[:, 0, 1]  # Complex values
+        gamma_01_phases = np.angle(gamma_01)  # Phase of Gamma[0,1]
+        gamma_01_magnitudes = np.abs(gamma_01)  # Magnitude of Gamma[0,1]
+        
+        # Convert phase to arrow components (unit vectors)
+        U_phase = np.cos(gamma_01_phases)  # x-component of unit vector
+        V_phase = np.sin(gamma_01_phases)  # y-component of unit vector
+        
+        # Use fixed arrow length for clearer phase visualization
+        fixed_arrow_length = 0.1 * radius  # Further increased fixed arrow length for better visibility
+        U_scaled = U_phase * fixed_arrow_length
+        V_scaled = V_phase * fixed_arrow_length
+        
+        # First plot points to show sampling locations
+        ax_phase.scatter(dkx, dky, c=gamma_01_magnitudes, cmap='plasma', 
+                        s=20, alpha=0.6, edgecolors='black', linewidth=0.5)
+        
+        # Create quiver plot with arrows showing phase direction
+        quiver_phase = ax_phase.quiver(dkx, dky, U_scaled, V_scaled, 
+                                      gamma_01_magnitudes, cmap='plasma', 
+                                      scale=1, scale_units='xy', angles='xy',
+                                      alpha=0.9, width=0.002, headwidth=3, headlength=4)
+        
+        # Add colorbar for magnitude
+        cbar_phase = plt.colorbar(quiver_phase, ax=ax_phase)
+        cbar_phase.set_label(r'$|\Gamma_{01}(k)|$ magnitude', fontsize=14)
+        
+        # Add Dirac point marker
+        ax_phase.scatter(0, 0, c='red', s=100, marker='*', edgecolors='black', 
+                        linewidth=1, label='Dirac Point', zorder=5)
+        
+        # Add circle showing analysis radius
+        circle_phase = plt.Circle((0, 0), radius, fill=False, color='red', 
+                                 linestyle='--', linewidth=2, label=f'Analysis radius = {radius}')
+        ax_phase.add_patch(circle_phase)
+        
+        # Set labels and title for phase plot
+        ax_phase.set_xlabel(r'$\Delta k_x$', fontsize=14)
+        ax_phase.set_ylabel(r'$\Delta k_y$', fontsize=14)
+        ax_phase.set_title(r'$\Gamma_{01}(k)$ Phase Vectors (arrows show $\arg[\Gamma_{01}(k)]$)' + '\nfrom fPEPS correlator matrix', 
+                          fontsize=14)
+        
+        # Set equal aspect ratio and limits for phase plot
+        ax_phase.set_aspect('equal')
+        ax_phase.set_xlim(-radius*1.1, radius*1.1)
+        ax_phase.set_ylim(-radius*1.1, radius*1.1)
+        ax_phase.grid(True, alpha=0.3)
+        ax_phase.legend(fontsize=12)
+        
+        # Adjust layout
+        plt.tight_layout()
         
         # Save 2D plot
         save_path_2d = save_path.with_name(save_path.stem + '_2d' + save_path.suffix)
         plt.savefig(save_path_2d, dpi=300, bbox_inches='tight')
-        print(f"🎨 2D Dirac analysis saved: {save_path_2d.name}")
+        print(f"🎨 2D Dirac analysis (energy + phase) saved: {save_path_2d.name}")
         plt.close()
         
         # Plot 1: dK^2 vs E(k)
@@ -398,6 +492,11 @@ def analyze_dirac_scaling_dense(glocal_file, dirac_point=(np.pi/3, -np.pi/3),
         
         plt.close()
     
+    # Extract Gamma[0,1] phase information for saved results
+    gamma_01_final = dense_correlator[:, 0, 1]
+    gamma_01_phases_final = np.angle(gamma_01_final)
+    gamma_01_magnitudes_final = np.abs(gamma_01_final)
+    
     # Save numerical results
     results = {
         'dirac_point': dirac_point,
@@ -409,7 +508,11 @@ def analyze_dirac_scaling_dense(glocal_file, dirac_point=(np.pi/3, -np.pi/3),
         'eigenvalues': eigenvalues,
         'dkx': dense_k_points[:, 0] - dirac_point[0],
         'dky': dense_k_points[:, 1] - dirac_point[1],
-        'energy_2d': np.abs(eigenvalues[:, 0])
+        'energy_2d': np.abs(eigenvalues[:, 0]),
+        'gamma_01_phases': np.array(gamma_01_phases_final),
+        'gamma_01_magnitudes': np.array(gamma_01_magnitudes_final),
+        'gamma_01_complex': np.array(gamma_01_final),
+        'parameters': {'Jx': Jx, 'Jy': Jy, 'Jz': Jz}
     }
     
     # Save as numpy file

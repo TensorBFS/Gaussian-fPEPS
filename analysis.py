@@ -27,16 +27,16 @@ NF = 1  # Number of physical fermion flavors (fixed for Kitaev)
 # Core Functions from kitaev.py (needed for analysis)
 # ============================================================================
 
-def batched_k(Lx, Ly):
-    """Generate momentum points in [-π, π] range to match exact_dispersion.py."""
-    X, Y = jnp.meshgrid((jnp.arange(Lx)+0.5)/Lx, jnp.arange(Ly)/Ly)
+def batched_k(L):
+    """Generate momentum points in [-π, π] range. Unified L instead of Lx,Ly."""
+    X, Y = jnp.meshgrid((jnp.arange(L))/L, (jnp.arange(L))/L)
     # Transform from [0,1] to [-π, π] range
-    kx = 2 * jnp.pi * (X - 0.5)  # Center at 0, range [-π, π]
-    ky = 2 * jnp.pi * (Y - 0.5)  # Center at 0, range [-π, π]
+    kx = 2 * jnp.pi * X  # Center at 0, range [-π, π]
+    ky = 2 * jnp.pi * Y  # Center at 0, range [-π, π]
     return jnp.array([kx.flatten(), ky.flatten()]).T
 
-def batched_Gin(Lx, Ly, Nv):
-    """Generate virtual bond matrices Gamma_in for all momentum points."""
+def batched_Gin(L, Nv):
+    """Generate virtual bond matrices Gamma_in for all momentum points. Unified L."""
     def _gamma_in(k, Nv):
         def single_gamma(ki):
             t = jnp.exp(1j*ki)
@@ -45,30 +45,30 @@ def batched_Gin(Lx, Ly, Nv):
             return block_diag(*[base for _ in range(Nv)])
         return block_diag(*[single_gamma(ki) for ki in k])
     
-    return vmap(lambda k: _gamma_in(k, Nv), 0)(batched_k(Lx, Ly))
+    return vmap(lambda k: _gamma_in(k, Nv), 0)(batched_k(L))
 
 # ============================================================================
 # Analysis Functions
 # ============================================================================
 
-def compute_correlator_from_glocal(Glocal, Lx, Ly, Nv):
+def compute_correlator_from_glocal(Glocal, L, Nv):
     """
     Compute correlator from saved Glocal matrix with new k-space sampling.
     
     Args:
         Glocal: Saved Glocal matrix (from optimization)
-        Lx, Ly: New k-space sampling parameters
+        L: k-space sampling parameter (unified, was Lx=Ly)
         Nv: Virtual bond dimension (must match the saved Glocal)
     
     Returns:
-        correlator: k-space correlator matrices, shape (Lx*Ly, 2*NF, 2*NF)
+        correlator: k-space correlator matrices, shape (L*L, 2*NF, 2*NF)
         k_points: corresponding k-points
     """
     Df = 2 * NF  # 2 for Kitaev
     
     # Generate new Gin with desired k-space sampling
-    Gin = batched_Gin(Lx, Ly, Nv)
-    k_points = batched_k(Lx, Ly)
+    Gin = batched_Gin(L, Nv)
+    k_points = batched_k(L)
     
     # Extract A, B, D from Glocal
     A = Glocal[:Df, :Df]
@@ -115,45 +115,13 @@ def compute_band_dispersion(correlator, k_points, Jx=1.0, Jy=1.0, Jz=1.0):
     
     return eigenvals
 
-def compute_real_space_correlations(correlator, k_points, Lx, Ly, max_distance=10):
-    """
-    Compute real-space correlation function G(r) via Fourier transform, with optional zero-padding.
-    Args:
-        correlator: k-space correlator matrices (Kx*Ky, ...)
-        k_points: corresponding k-points
-        Lx, Ly: real-space grid size for zero-padding (can be > Kx, Ky)
-        max_distance: maximum distance for G(r) calculation
-    Returns:
-        G_r: real-space correlations, shape (2*max_distance+1, 2*max_distance+1, ...)
-        r_points: corresponding real-space points
-    """
-    Kx = int(jnp.sqrt(len(k_points)))
-    Ky = Kx
-    correlator_2d = correlator.reshape(Kx, Ky, 2*NF, 2*NF)
-    # Zero-pad to Lx, Ly
-    pad_x = (Lx - Kx) // 2
-    pad_y = (Ly - Ky) // 2
-    pad_width = ((pad_x, Lx-Kx-pad_x), (pad_y, Ly-Ky-pad_y), (0,0), (0,0))
-    correlator_padded = jnp.pad(correlator_2d, pad_width)
-    # Fourier transform to real space
-    G_r_full = jnp.fft.ifft2(correlator_padded, axes=(0, 1))
-    G_r_full = jnp.fft.fftshift(G_r_full, axes=(0, 1))
-    # Extract central region around r=0
-    center_x, center_y = Lx // 2, Ly // 2
-    x_slice = slice(center_x - max_distance, center_x + max_distance + 1)
-    y_slice = slice(center_y - max_distance, center_y + max_distance + 1)
-    G_r = G_r_full[x_slice, y_slice]
-    # Generate real-space coordinate grid centered at (0,0)
-    r_x = jnp.arange(-max_distance, max_distance + 1)
-    r_y = jnp.arange(-max_distance, max_distance + 1)
-    r_points = jnp.stack(jnp.meshgrid(r_x, r_y, indexing='ij'), axis=-1)
-    return G_r, r_points
+# Real-space correlation functions moved to analysis_correlation.py
 
 # ============================================================================
-# Plotting Functions
+# Plotting Functions (Simplified - correlation plots moved to analysis_correlation.py)
 # ============================================================================
 
-def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, correlator, Lx, Ly,
+def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, correlator, L,
                                                        save_path=None, band_index=0, show_vector_field=True):
     """
     Plot 2D band structure with correlator phase vector field (like exact_dispersion.py).
@@ -162,7 +130,7 @@ def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, c
         eigenvalues: Band energies, shape (n_k, n_bands)
         k_points: k-point grid, shape (n_k, 2)
         correlator: k-space correlator matrices, shape (n_k, 2, 2)
-        Lx, Ly: Grid dimensions
+        L: Grid dimension (unified)
         save_path: Path to save figure
         band_index: Which band to plot
         show_vector_field: Whether to show correlator[0,1] phase vector field
@@ -204,7 +172,7 @@ def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, c
         # Extract correlator[0,1] phase
         correlator_01 = correlator[:, 0, 1]
         phases = np.angle(correlator_01)
-        phases_2d = phases.reshape(n_k, n_k)  # Use n_k instead of Lx, Ly
+        phases_2d = phases.reshape(n_k, n_k)  # Use n_k (=L) for grid
         
         # Generate vector field from phase gradient (like exact_dispersion.py)
         skip_factor = 3
@@ -564,30 +532,29 @@ def save_analysis_results(results, seed_dir, prefix="analysis"):
 # Main Analysis Pipeline
 # ============================================================================
 
-def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, save_plots=True, output_dir=None, show_vector_field=True):
+def run_analysis(glocal_file, K=50, save_plots=True, output_dir=None, show_vector_field=True):
     """
-    Complete analysis pipeline with separate k-space and real-space grid sizes.
+    Simplified analysis pipeline focusing on band dispersion.
+    Correlation analysis moved to analysis_correlation.py.
+    
     Args:
         glocal_file: Path to Glocal file (.npy or .json)
-        Kx, Ky: k-space sampling for analysis
-        Lx, Ly: real-space grid size for zero-padding (can be > Kx, Ky)
-        max_distance: maximum distance for G(r) calculation
+        K: k-space sampling (unified, was Kx=Ky)
         save_plots: whether to save plots
         output_dir: optional override for output directory (default: auto-detect seed dir)
         show_vector_field: whether to show correlator phase vector field
     """
-    print(f"🔬 Starting analysis of: {glocal_file}")
+    print(f"🔬 Starting simplified analysis of: {glocal_file}")
     # Load Glocal and metadata
     Glocal, metadata = load_glocal_from_file(glocal_file)
     # Extract original parameters
     if metadata and 'config' in metadata:
         original_config = metadata['config']
         Nv = original_config['Nv']
-        original_Lx = original_config['Lx']
-        original_Ly = original_config['Ly']
+        original_L = original_config.get('Lx', original_config.get('L', 50))  # backward compatibility
         seed = original_config['seed']
-        print(f"📋 Original parameters: Lx={original_Lx}, Ly={original_Ly}, Nv={Nv}, seed={seed}")
-        print(f"📋 Analysis parameters: Kx={Kx}, Ky={Ky}, Lx={Lx}, Ly={Ly}, max_distance={max_distance}")
+        print(f"📋 Original parameters: L={original_L}, Nv={Nv}, seed={seed}")
+        print(f"📋 Analysis parameters: K={K}")
     else:
         raise ValueError("Could not extract Nv from metadata. Please specify manually.")
     # Determine output directory - use Nv{N}seed{M} directory by default
@@ -611,67 +578,49 @@ def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, s
     else:
         seed_dir = Path(output_dir)
     print(f"📁 Saving analysis to: {seed_dir}")
-    # Compute correlator with new k-space sampling
+    
+    # Compute correlator with k-space sampling
     print("🔄 Computing correlator...")
-    correlator, k_points = compute_correlator_from_glocal(Glocal, Kx, Ky, Nv)
-    # Compute TRUE band dispersion E(k) from Hamiltonian
-    print("📊 Computing TRUE band dispersion E(k)...")
+    correlator, k_points = compute_correlator_from_glocal(Glocal, K, Nv)
+    
+    # Compute band dispersion E(k) from Hamiltonian
+    print("📊 Computing band dispersion E(k)...")
     Jx, Jy, Jz = original_config.get('Jx', 1.0), original_config.get('Jy', 1.0), original_config.get('Jz', 1.0)
     eigenvalues = compute_band_dispersion(correlator, k_points, Jx, Jy, Jz)
-    # Compute real-space correlations
-    print("🌐 Computing real-space correlations...")
-    G_r, r_points = compute_real_space_correlations(correlator, k_points, Lx, Ly, max_distance)
-    # Save numerical results
+    # Save numerical results (simplified)
     results = {
         'correlator': correlator,
         'k_points': k_points,
         'eigenvalues': eigenvalues,
-        'G_r': G_r,
-        'r_points': r_points,
-        'analysis_Lx': Lx,
-        'analysis_Ly': Ly,
-        'max_distance': max_distance,
+        'analysis_K': K,
         'original_config': metadata.get('config', {}),
         'seed': seed
     }
     
     save_analysis_results(results, seed_dir)
     
-    # Generate plots in same seed directory
+    # Generate plots in same seed directory (simplified - only band dispersion)
     if save_plots:
-        print("🎨 Generating PRL-quality plots...")
+        print("🎨 Generating band dispersion plots...")
         
         # Generate band dispersion plot with optional vector field
         if show_vector_field:
-            # Use new 2D band structure with vector field
             plot_2d_band_structure_with_correlator_vector_field(
-                eigenvalues, k_points, correlator, Kx, Ky,
+                eigenvalues, k_points, correlator, K,
                 save_path=seed_dir / "band_dispersion_with_vector_field.png",
                 band_index=0, show_vector_field=True
             )
-            
-
         else:
             plot_band_dispersion(
                 eigenvalues, k_points,
                 save_path=seed_dir / "band_dispersion.png"
             )
         
-        # Generate high-quality correlation plots for all components
-        n_components = G_r.shape[2]
-        for i in range(n_components):
-            for j in range(n_components):
-                plot_real_space_correlations(
-                    G_r, r_points, component=(i,j),
-                    save_path=seed_dir / f"correlation_G{i}{j}_hq.png"
-                )
-        
         # Generate additional specialized plots if high-quality modules available
         try:
             from plot.dispersion import DispersionPlotter
-            from plot.correlation import (CorrelationPlotter, plot_correlation_decay, 
-                                        plot_correlation_scaling_analysis, 
-                                        plot_correlation_scaling_analysis_diagonal)
+            from plot.dispersion import plot_diagonal_band_dispersion
+            from plot.dispersion import plot_dirac_scaling_analysis, plot_2d_band_structure_with_dirac_search
             
             print("🎨 Generating additional specialized plots...")
             
@@ -682,32 +631,7 @@ def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, s
                 save_path=seed_dir / "density_of_states.png"
             )
             
-            # Enhanced correlation analysis for each component
-            print("🔬 Performing power law scaling analysis...")
-            n_components = G_r.shape[2]
-            for i in range(n_components):
-                for j in range(n_components):
-                    # Power law scaling analysis (x-direction)
-                    plot_correlation_scaling_analysis(
-                        G_r=np.array(G_r), 
-                        r_points=np.array(r_points),
-                        component=(i,j),
-                        direction='x',
-                        save_path=seed_dir / f"correlation_scaling_G{i}{j}_x.png"
-                    )
-                    
-                    # Power law scaling analysis (diagonal x+y direction)
-                    plot_correlation_scaling_analysis_diagonal(
-                        G_r=np.array(G_r), 
-                        r_points=np.array(r_points),
-                        component=(i,j),
-                        save_path=seed_dir / f"correlation_scaling_G{i}{j}_diagonal.png"
-                    )
-                    
-                    # Skip 4-fold copy - not needed with proper fftshift centering
-            
             # Simplified band dispersion along diagonal line (0,2π) to (2π,0)
-            from plot.dispersion import plot_diagonal_band_dispersion
             plot_diagonal_band_dispersion(
                 eigenvalues=np.array(eigenvalues),
                 k_points=np.array(k_points),
@@ -716,7 +640,6 @@ def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, s
             )
             
             # Dirac point scaling analysis with known Dirac point location
-            from plot.dispersion import plot_dirac_scaling_analysis, plot_2d_band_structure_with_dirac_search
             print("🔬 Performing Dirac point scaling analysis...")
             
             # Create 2D band structure plot to visualize the band structure
@@ -759,21 +682,13 @@ def run_analysis(glocal_file, Kx=100, Ky=100, Lx=100, Ly=100, max_distance=10, s
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Analyze Kitaev fPEPS results: band dispersion and real-space correlations",
+        description="Analyze Kitaev fPEPS results: band dispersion analysis (simplified)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("glocal_file", type=str, 
                        help="Path to Glocal .npy file or metadata .json file")
-    parser.add_argument("--Kx", type=int, default=100,
-                       help="k-space sampling in x direction (for correlator)")
-    parser.add_argument("--Ky", type=int, default=100, 
-                       help="k-space sampling in y direction (for correlator)")
-    parser.add_argument("--Lx", type=int, default=100,
-                       help="real-space grid size in x direction (for zero-padding)")
-    parser.add_argument("--Ly", type=int, default=100, 
-                       help="real-space grid size in y direction (for zero-padding)")
-    parser.add_argument("--max_distance", type=int, default=10,
-                       help="Maximum distance for G(r) calculation")
+    parser.add_argument("--K", type=int, default=50,
+                       help="k-space sampling (unified, was Kx=Ky)")
     parser.add_argument("--output_dir", type=str, default=None,
                        help="Output directory for results (default: auto-detect seed directory)")
     parser.add_argument("--no_plots", action="store_true",
@@ -787,20 +702,17 @@ def main():
     args = parse_args()
     results = run_analysis(
         glocal_file=args.glocal_file,
-        Kx=args.Kx,
-        Ky=args.Ky,
-        Lx=args.Lx,
-        Ly=args.Ly,
-        max_distance=args.max_distance,
+        K=args.K,
         save_plots=not args.no_plots,
         output_dir=args.output_dir,
         show_vector_field=not args.no_vector_field
     )
-    print(f"\n📈 Analysis Summary:")
+    print(f"\n📈 Analysis Summary (Simplified):")
+    print(f"   K-space sampling: {args.K}×{args.K}")
     print(f"   Number of k-points: {len(results['k_points'])}")
     print(f"   Number of bands: {results['eigenvalues'].shape[1]}")
-    print(f"   G(r) grid size: {results['G_r'].shape[:2]}")
     print(f"   Results saved to: {args.output_dir if args.output_dir else 'auto-detected seed directory'}")
+    print(f"   📝 For correlation analysis, use: python analysis_correlation.py {args.glocal_file}")
 
 if __name__ == '__main__':
     main() 

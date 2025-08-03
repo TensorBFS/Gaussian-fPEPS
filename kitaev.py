@@ -15,6 +15,7 @@ from pymanopt.optimizers import ConjugateGradient
 from pymanopt import Problem
 import logging
 from dataclasses import dataclass
+from jax.numpy.linalg import solve
 
 # Fixed parameters for Kitaev spin-1/2 model
 NF = 1  # Number of physical fermion flavors (fixed for Kitaev)
@@ -37,6 +38,9 @@ def kitaev_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0):
     # J(k) = Jz - Jx*exp(ikx) - Jy*exp(iky) 
     Jk = Jz - Jx * jnp.exp(1j * kx) - Jy * jnp.exp(1j * ky)
     # Anti-Hermitian matrix
+    
+    # Jk = Jk / jnp.abs(Jk) # What if we Only take care the argument of Jk
+
     return jnp.array([[0, Jk], [-Jk.conj(), 0]]) / 4.0 # sigma_a -> S_a
 
 # ============================================================================
@@ -45,7 +49,7 @@ def kitaev_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0):
 
 def batched_k(Lx, Ly):
     """Generate momentum points with APBC-PBC boundary conditions."""
-    X, Y = jnp.meshgrid((jnp.arange(Lx)+0.5)/Lx, jnp.arange(Ly)/Ly)
+    X, Y = jnp.meshgrid((jnp.arange(Lx))/Lx, jnp.arange(Ly)/Ly)
     return 2 * jnp.pi * jnp.array([X.flatten(), Y.flatten()]).T
 
 def batched_Gin(Lx, Ly, Nv):
@@ -76,7 +80,8 @@ def make_correlator(Lx, Ly, Nv):
         """Gaussian mapping: Γ_out = A + B(D + Γ_in)^(-1)B^T"""
         Glocal = jnp.transpose(T) @ j_matrix @ T
         A, B, D = Glocal[:Df, :Df], Glocal[:Df, Df:], Glocal[Df:, Df:]
-        return A + B @ inv(D + Gin) @ jnp.transpose(B)
+        return A + B @ solve(D + Gin, B.T)
+        # return A + B @ inv(D + Gin) @ jnp.transpose(B)
 
     return correlator
 
