@@ -11,7 +11,7 @@ from jax import vmap, jit
 from jax.scipy.linalg import inv, block_diag
 import pymanopt
 from pymanopt.manifolds.stiefel import Stiefel
-from pymanopt.optimizers import ConjugateGradient
+from pymanopt.optimizers import ConjugateGradient, SteepestDescent
 from pymanopt import Problem
 import logging
 from dataclasses import dataclass
@@ -157,7 +157,8 @@ def optimize(kitaev_system, max_iterations=1000, verbosity=1):
 
     problem = Problem(manifold=manifold, cost=cost)
     solver = ConjugateGradient(
-        verbosity=0, 
+    # solver = SteepestDescent(
+        verbosity=1, 
         min_gradient_norm=1e-08,
         min_step_size=1e-12,
         log_verbosity=verbosity, 

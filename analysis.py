@@ -29,11 +29,12 @@ NF = 1  # Number of physical fermion flavors (fixed for Kitaev)
 
 def batched_k(L):
     """Generate momentum points in [-π, π] range. Unified L instead of Lx,Ly."""
-    X, Y = jnp.meshgrid((jnp.arange(L))/L, (jnp.arange(L))/L)
+    X, Y = jnp.meshgrid((jnp.arange(L))/L, (jnp.arange(L))/L, indexing='xy')
     # Transform from [0,1] to [-π, π] range
-    kx = 2 * jnp.pi * X  # Center at 0, range [-π, π]
-    ky = 2 * jnp.pi * Y  # Center at 0, range [-π, π]
-    return jnp.array([kx.flatten(), ky.flatten()]).T
+    kx = 2 * jnp.pi * (X-0.5)  # Center at 0, range [-π, π]
+    ky = 2 * jnp.pi * (Y-0.5)  # Center at 0, range [-π, π]
+    # Use Fortran order to match meshgrid indexing
+    return jnp.array([kx.flatten(order='F'), ky.flatten(order='F')]).T
 
 def batched_Gin(L, Nv):
     """Generate virtual bond matrices Gamma_in for all momentum points. Unified L."""
@@ -144,9 +145,10 @@ def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, c
     # Reshape data for 2D plotting
     n_k = int(np.sqrt(len(k_points)))
     if n_k * n_k == len(k_points):
-        kx = k_points[:, 0].reshape(n_k, n_k)
-        ky = k_points[:, 1].reshape(n_k, n_k)
-        energies = eigenvalues[:, band_index].reshape(n_k, n_k)
+        # Reshape data for 2D plotting using Fortran order to match k-point generation
+        kx = k_points[:, 0].reshape(n_k, n_k, order='F')
+        ky = k_points[:, 1].reshape(n_k, n_k, order='F')
+        energies = eigenvalues[:, band_index].reshape(n_k, n_k, order='F')
         
         # Create contour plot
         levels = np.linspace(np.min(energies), np.max(energies), 30)
@@ -169,10 +171,12 @@ def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, c
     
     # Add vector field if requested
     if show_vector_field:
-        # Extract correlator[0,1] phase
+        # Extract correlator[0,1] phase and apply π - arg(Γ) transformation
+        # This should match arg(J_k) if arg(Γ) + arg(J_k) = π + 2nπ
         correlator_01 = correlator[:, 0, 1]
-        phases = np.angle(correlator_01)
-        phases_2d = phases.reshape(n_k, n_k)  # Use n_k (=L) for grid
+        gamma_phases = np.angle(correlator_01)
+        phases = np.pi - gamma_phases  # Transform: π - arg(Γ) ≈ arg(J_k)
+        phases_2d = phases.reshape(n_k, n_k, order='F')  # Use Fortran order to match k-point grid
         
         # Generate vector field from phase gradient (like exact_dispersion.py)
         skip_factor = 3
@@ -180,21 +184,16 @@ def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, c
         X = kx[::skip, ::skip]
         Y = ky[::skip, ::skip]
         
-        # Compute gradient of phase for vector field
-        grad_phase_x = np.gradient(phases_2d, axis=1)[::skip, ::skip]
-        grad_phase_y = np.gradient(phases_2d, axis=0)[::skip, ::skip]
-        
-        # Normalize vectors
-        norm = np.sqrt(grad_phase_x**2 + grad_phase_y**2)
-        U = grad_phase_x / (norm + 1e-10)
-        V = grad_phase_y / (norm + 1e-10)
+        # Convert phase to arrow components (unit vectors)
+        U = np.cos(phases_2d[::skip, ::skip])  # x-component of unit vector
+        V = np.sin(phases_2d[::skip, ::skip])  # y-component of unit vector
         
         # Plot vector field (same as exact_dispersion.py)
         quiver = ax.quiver(X, Y, U, V, color='black', alpha=0.8, 
                           scale=50, width=0.002, headwidth=2, headlength=3)
         
         # Add legend for vector field
-        ax.quiverkey(quiver, 0.9, 0.95, 1, r'$\nabla \arg \Gamma_{01}(k)$', 
+        ax.quiverkey(quiver, 0.9, 0.95, 1, r'$\pi - \arg \Gamma_{01}(k)$', 
                     labelpos='E', coordinates='figure', fontproperties={'size': 10})
     
     # Mark high-symmetry points
@@ -231,7 +230,7 @@ def plot_2d_band_structure_with_correlator_vector_field(eigenvalues, k_points, c
     
     title = f'2D Band Structure with Correlator Phase Vector Field\nBand {band_index + 1}'
     if show_vector_field:
-        title += " (Γ[0,1] Phase Vector Field)"
+        title += r" ($\pi - \arg \Gamma_{01}$ Vector Field)"
     ax.set_title(title, fontsize=16, pad=15)
     
     ax.set_aspect('equal')

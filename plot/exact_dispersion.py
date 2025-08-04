@@ -65,7 +65,7 @@ def kitaev_kernel(k, Jx=1.0, Jy=1.0, Jz=1.0):
     """
     kx, ky = k[0], k[1]
     Jk = Jz - Jx * jnp.exp(1j * kx) - Jy * jnp.exp(1j * ky)
-    return jnp.array([[0, Jk], [-Jk, 0]]) / 4.0
+    return jnp.array([[0, Jk], [-Jk.conj(), 0]]) / 4.0
 
 def compute_Jk_phase(k_points, Jx=1.0, Jy=1.0, Jz=1.0):
     """
@@ -139,8 +139,9 @@ def generate_2d_grid(kx_range=(-np.pi, np.pi), ky_range=(-np.pi, np.pi), n_point
     kx = np.linspace(kx_range[0], kx_range[1], n_points)
     ky = np.linspace(ky_range[0], ky_range[1], n_points)
     
-    kx_mesh, ky_mesh = np.meshgrid(kx, ky)
-    k_grid = np.column_stack([kx_mesh.ravel(), ky_mesh.ravel()])
+    kx_mesh, ky_mesh = np.meshgrid(kx, ky, indexing='xy')
+    # Use Fortran order to match the other scripts
+    k_grid = np.column_stack([kx_mesh.ravel(order='F'), ky_mesh.ravel(order='F')])
     
     return k_grid, kx_mesh, ky_mesh
 
@@ -162,23 +163,18 @@ def generate_vector_field(kx_mesh, ky_mesh, phases, magnitudes, skip_factor=1):
         X, Y: Vector field coordinates
         U, V: Vector field components
     """
-    # Reshape to 2D
-    phases_2d = phases.reshape(kx_mesh.shape)
-    magnitudes_2d = magnitudes.reshape(kx_mesh.shape)
+    # Reshape to 2D using Fortran order to match meshgrid
+    phases_2d = phases.reshape(kx_mesh.shape, order='F')
+    magnitudes_2d = magnitudes.reshape(kx_mesh.shape, order='F')
     
     # Skip points for cleaner vector field
     skip = skip_factor
     X = kx_mesh[::skip, ::skip]
     Y = ky_mesh[::skip, ::skip]
     
-    # Compute gradient of phase for vector field
-    grad_phase_x = np.gradient(phases_2d, axis=1)[::skip, ::skip]
-    grad_phase_y = np.gradient(phases_2d, axis=0)[::skip, ::skip]
-    
-    # Normalize vectors
-    norm = np.sqrt(grad_phase_x**2 + grad_phase_y**2)
-    U = grad_phase_x / (norm + 1e-10)
-    V = grad_phase_y / (norm + 1e-10)
+    # Convert phase to arrow components (unit vectors)
+    U = np.cos(phases_2d[::skip, ::skip])  # x-component of unit vector
+    V = np.sin(phases_2d[::skip, ::skip])  # y-component of unit vector
     
     return X, Y, U, V
 
@@ -241,7 +237,7 @@ def plot_kitaev_exact_2d_with_vector_field(Jx=1.0, Jy=1.0, Jz=1.0, band_index=0,
                           scale=50, width=0.002, headwidth=2, headlength=3)
         
         # Add legend for vector field
-        ax.quiverkey(quiver, 0.9, 0.95, 1, r'$\nabla \arg J(k)$', 
+        ax.quiverkey(quiver, 0.9, 0.95, 1, r'$\arg J(k)$', 
                     labelpos='E', coordinates='figure', fontproperties={'size': 10})
     
     # Add colorbar
@@ -271,7 +267,7 @@ def plot_kitaev_exact_2d_with_vector_field(Jx=1.0, Jy=1.0, Jz=1.0, band_index=0,
     if title:
         ax.set_title(title, fontsize=16, pad=15)
     else:
-        vector_field_text = " with J(k) Phase Vector Field" if show_vector_field else ""
+        vector_field_text = " with J(k) Phase Vectors" if show_vector_field else ""
         ax.set_title(f'Kitaev Model: Band {band_index + 1} Energy Surface{vector_field_text} (Jx={Jx}, Jy={Jy}, Jz={Jz})', 
                     fontsize=16, pad=15)
     
