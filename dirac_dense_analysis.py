@@ -523,11 +523,23 @@ def analyze_dirac_scaling_dense(glocal_file, dirac_point=(np.pi/3, -np.pi/3),
         mean_mag = np.mean(gamma_00_magnitude)
         std_mag = np.std(gamma_00_magnitude)
         
+        # Calculate momentum space integral of |Gamma[0,0](k)|
+        # Grid spacing in each direction (since we use linspace from -radius to +radius)
+        dk = 2 * radius / (grid_size - 1)  # Grid spacing
+        dk_squared = dk * dk  # Area element
+        
+        # Only integrate where |Gamma[0,0]| > 0.3 (to focus on significant features)
+        significant_mask = gamma_00_magnitude > 0.3
+        integral_value = np.sum(gamma_00_magnitude[significant_mask]) * dk_squared
+        num_significant_points = np.sum(significant_mask)
+        
         # Check for peaks near 0
         peak_near_zero = np.sum(gamma_00_magnitude < 0.1)
         very_small_peak = np.sum(gamma_00_magnitude < 0.01)
         
         mag_stats_text = f'Max: {max_mag:.3f}\nMin: {min_mag:.3f}\nMean: {mean_mag:.3f}\nStd: {std_mag:.3f}'
+        mag_stats_text += f'\n∫|Γ₀₀(k)|d²k (|Γ|>0.3): {integral_value:.4f}'
+        mag_stats_text += f'\nPoints with |Γ|>0.3: {num_significant_points}'
         if peak_near_zero > 0:
             mag_stats_text += f'\n|Γ| < 0.1: {peak_near_zero} points'
         if very_small_peak > 0:
